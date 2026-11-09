@@ -1,0 +1,16 @@
+{
+  "name": "muhaqqiq-taammuli",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test/function.test.mjs"
+  },
+  "dependencies": {
+    "@netlify/database": "^2.0.3"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17"
+  }
+}

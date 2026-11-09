@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}html{color-scheme:light}body{margin:0}</style>
+<title>المحقق التأملي</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: header on top, collapsible right-hand sidebar (RTL), one centered question column. */
+:root {
+  --bg: #f6f9fa;
+  --surface: #ffffff;
+  --fg: #17323a;
+  --muted: #5b727a;
+  --line: #dbe5e8;
+  --teal: #0f5560;
+  --teal-soft: #e4f0f1;
+  --on-teal: #ffffff;
+  --gold: #b8923a;
+  --gold-soft: #f6efdc;
+  --leaf: #5f8a4e;
+  --focus: #1b7f8c;
+  --font: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1c20; --surface: #162a30; --fg: #e6f0f2; --muted: #9db4ba; --line: #274047;
+    --teal: #6cc4cf; --teal-soft: #19363c; --on-teal: #0f1c20; --gold: #d8b25e; --gold-soft: #2f2a1a;
+    --leaf: #8fc07b; --focus: #6cc4cf; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1c20; --surface: #162a30; --fg: #e6f0f2; --muted: #9db4ba; --line: #274047;
+  --teal: #6cc4cf; --teal-soft: #19363c; --on-teal: #0f1c20; --gold: #d8b25e; --gold-soft: #2f2a1a;
+  --leaf: #8fc07b; --focus: #6cc4cf; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.7;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 40; background: var(--surface);
+}
+button, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* header */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+  background: var(--surface); border-bottom: 2px solid var(--gold);
+  padding-block: 8px; padding-left: var(--gutter-l); padding-right: var(--gutter-r);
+}
+.top-in { display: flex; align-items: center; gap: 14px; max-width: 1100px; margin: 0 auto; }
+.menu-btn {
+  width: 40px; height: 40px; flex: none; display: grid; place-items: center;
+  background: var(--teal-soft); border: 1px solid var(--line); border-radius: 10px; color: var(--teal);
+}
+.logo { flex: none; width: 40px; height: 40px; color: var(--teal); }
+.titles { min-width: 0; }
+.titles h1 { margin: 0; font-size: 1.3rem; line-height: 1.3; color: var(--teal); font-weight: 700; }
+.titles p { margin: 0; font-size: .85rem; color: var(--muted); line-height: 1.5; }
+
+/* shell */
+.shell { display: flex; align-items: flex-start; max-width: 1100px; margin: 0 auto; }
+.side {
+  flex: none; width: 190px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 66px);
+  padding: 16px 0; padding-right: var(--gutter-r);
+}
+.side[hidden] { display: none; }
+.side ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.nav {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: start;
+  background: transparent; border: 0; border-radius: 10px; padding: 8px 12px; color: var(--fg); font-size: .95rem;
+}
+.nav:hover:not(:disabled) { background: var(--teal-soft); }
+.nav[aria-current="page"] { background: var(--teal-soft); color: var(--teal); font-weight: 600; box-shadow: inset -3px 0 0 var(--gold); }
+.nav:disabled { color: var(--muted); cursor: default; }
+.tag { font-size: .72rem; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 0 8px; line-height: 1.6; white-space: nowrap; }
+.backdrop { display: none; }
+a.nav { text-decoration: none; }
+.count { margin: 18px 0 0; font-size: .8rem; color: var(--muted); }
+
+main { flex: 1; min-width: 0; padding-block: 20px 40px; padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+.col { max-width: 720px; margin: 0 auto; }
+
+/* home */
+.home h2 { margin: 0 0 8px; font-size: 1.4rem; line-height: 1.4; color: var(--teal); }
+.home p { margin: 0 0 18px; font-size: 1rem; max-width: 56ch; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px;
+  padding: 6px 20px; border-radius: 10px; font-size: .95rem; border: 1px solid var(--teal); font-weight: 600;
+}
+.btn-primary { background: var(--teal); color: var(--on-teal); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { background: var(--surface); color: var(--teal); }
+.btn-ghost:hover:not(:disabled) { background: var(--teal-soft); }
+.btn:disabled { opacity: .4; cursor: default; }
+
+/* progress */
+.prog { margin-bottom: 16px; }
+.prog-row { display: flex; justify-content: space-between; gap: 12px; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+.bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--teal); border-radius: 99px; transition: width .25s ease; }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+
+/* question */
+.phase { margin: 0 0 2px; font-size: .9rem; font-weight: 600; color: var(--gold); }
+.phase span { color: var(--muted); font-weight: 400; }
+.q { margin: 6px 0 6px; font-size: 1.3rem; line-height: 1.55; font-weight: 600; color: var(--fg); text-wrap: balance; }
+.hint { margin: 0 0 12px; color: var(--muted); font-size: .9rem; }
+.hint b { font-weight: 600; }
+.lbl { display: block; margin: 12px 0 5px; font-weight: 500; font-size: .9rem; }
+textarea {
+  width: 100%; min-height: 120px; resize: vertical; padding: 10px 14px; line-height: 1.7;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px;
+}
+textarea:focus { border-color: var(--focus); }
+.help-wrap { margin-top: 10px; }
+.opts { margin-top: 10px; display: grid; gap: 6px; }
+.opt {
+  text-align: start; width: 100%; padding: 8px 14px; border-radius: 10px; min-height: 42px; font-size: .95rem;
+  background: var(--surface); border: 1.5px solid var(--line);
+}
+.opt:hover { border-color: var(--teal); }
+.opt[aria-pressed="true"] { background: var(--teal-soft); border-color: var(--teal); font-weight: 600; color: var(--teal); }
+.follow { margin-top: 12px; border-top: 1px dashed var(--line); }
+.follow .lbl { color: var(--teal); font-weight: 600; }
+textarea.sm { min-height: 80px; }
+.nav-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 20px; }
+.nav-row .btn { flex: 1; max-width: 170px; }
+.link-btn { justify-self: start; background: none; border: 0; padding: 2px 0; color: var(--teal); font-size: .85rem; text-decoration: underline; text-underline-offset: 3px; }
+.saved { margin: 10px 0 0; font-size: .8rem; color: var(--muted); }
+
+.done h2 { margin: 0 0 8px; color: var(--teal); font-size: 1.3rem; }
+.done p { margin: 0 0 16px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
+.confirm { margin-top: 16px; padding: 14px 16px; border: 1px solid var(--gold); background: var(--gold-soft); border-radius: 12px; }
+.confirm p { margin: 0 0 12px; }
+
+@media (max-width: 800px) {
+  .side {
+    position: fixed; z-index: 35; top: 0; bottom: 0; right: 0; width: min(210px, 70vw);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 70px); padding-left: 12px;
+    background: var(--surface); border-left: 1px solid var(--line); box-shadow: -8px 0 24px rgba(0,0,0,.12);
+  }
+  .backdrop { position: fixed; inset: 0; z-index: 34; background: rgba(10, 30, 36, .35); }
+  .backdrop:not([hidden]) { display: block; }
+  .q { font-size: 1.15rem; }
+  .titles h1 { font-size: 1.15rem; }
+  .titles p { font-size: .78rem; }
+}
+/* report */
+.rep-head { display: grid; gap: 10px; margin-bottom: 8px; }
+.rep-head h2 { margin: 0; font-size: 1.4rem; color: var(--teal); }
+.sec { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--line); }
+.sec-h { margin: 0 0 12px; font-size: 1.15rem; color: var(--teal); }
+.group { margin-bottom: 16px; }
+.group h3 { margin: 0 0 6px; font-size: .95rem; color: var(--gold); }
+.item { padding: 6px 0; }
+.item h4 { margin: 0 0 2px; font-size: .85rem; font-weight: 500; color: var(--muted); }
+.ans { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fq { margin: 8px 0 0; font-size: .85rem; color: var(--muted); }
+.sub { margin: 10px 0 0; font-size: .85rem; color: var(--muted); }
+.none { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
+.chip { display: inline-block; padding: 1px 12px; border-radius: 99px; background: var(--teal-soft); color: var(--teal); font-size: .88rem; font-weight: 600; }
+.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.notes li { padding-inline-start: 12px; border-inline-start: 2px solid var(--line); }
+.plan { background: var(--teal-soft); border: 1px solid var(--line); border-inline-start: 4px solid var(--gold); border-radius: 12px; padding: 12px 16px; display: grid; gap: 6px; }
+.plan .item h4 { color: var(--teal); font-weight: 600; }
+@media print {
+  :root:root:root:root { --bg:#fff; --surface:#fff; --fg:#111; --muted:#444; --line:#ccc; --teal:#0f5560; --teal-soft:#eef5f6; --gold:#8a6a1e; color-scheme: light; }
+  .top, .side, .backdrop, .no-print, body::before { display: none !important; }
+  .shell { display: block; max-width: none; }
+  main { padding: 0; }
+  .col { max-width: none; }
+  .sec, .group, .plan { break-inside: avoid; }
+}
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="القائمة الجانبية" aria-controls="side" aria-expanded="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <svg class="logo" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <circle cx="20" cy="20" r="14" stroke="currentColor" stroke-width="3.5"/>
+      <path d="M31 31l11 11" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M20 27v-9M20 20c-4 0-6-3-6-6 4 0 6 2 6 6zM20 22c4 0 6-3 6-6-4 0-6 2-6 6z" stroke="var(--leaf)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="titles">
+      <h1>المحقق التأملي</h1>
+      <p>أداة لدعم المعلمة في ممارسة التدريس التأملي</p>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="side" id="side" aria-label="القائمة الجانبية">
+    <ul>
+      <li><button class="nav" type="button" data-go="home">الرئيسية</button></li>
+      <li><button class="nav" type="button" data-go="session">جلسة التأمل</button></li>
+      <li><button class="nav" type="button" data-go="results">نتائج تأملي</button></li>
+      <li id="evalLi"></li>
+    </ul>
+  </nav>
+  <div class="backdrop" id="backdrop" hidden></div>
+  <main id="main"><div class="col" id="view"></div></main>
+</div>
+
+<script>
+document.documentElement.dir = "rtl";
+document.documentElement.lang = "ar";
+
+const PHASES = [
+  "المرحلة الأولى: فهم الموقف",
+  "المرحلة الثانية: فهم القرار",
+  "المرحلة الثالثة: مراجعة ما حدث",
+  "المرحلة الرابعة: استكشاف البدائل",
+  "المرحلة الخامسة: التخطيط للتحسين",
+  "المرحلة السادسة: التأمل الشخصي"
+];
+// two questions per phase
+const QUESTIONS = [
+  { q: "حدثيني عن موقف وقع في الفصل ولفت انتباهك.",
+    hint: "ليس بالضرورة أن يكون موقفًا صعبًا؛ فقد يكون تجربة ناجحة أو موقفًا لم يسر كما توقعتِ.",
+    opts: ["موقف مع طالبة أو مجموعة من الطالبات","موقف أثناء شرح الدرس","موقف يتعلق بالتفاعل والمشاركة","موقف يتعلق بإدارة الفصل","موقف ناجح أود فهم أسباب نجاحه","موقف آخر"],
+    follow: "هل يمكنك وصف ما حدث في هذا الموقف؟" },
+  { q: "كيف تصرفتِ في ذلك الوقت؟",
+    opts: ["تدخلت مباشرة","غيّرت طريقة الشرح أو النشاط","تحدثت مع الطالبة أو الطالبات","واصلت الحصة دون تدخل","اتخذت إجراءً آخر"],
+    follow: "كيف نفذتِ هذا التصرف؟" },
+  { q: "ما الهدف الأساسي الذي كنتِ تسعين إلى تحقيقه من تصرفك؟",
+    opts: ["المحافظة على نظام الفصل","مساعدة الطالبات على الفهم","المحافظة على سلامة الطالبات","تشجيع المشاركة والتفاعل","مواصلة الحصة دون تعطيل","هدف آخر"],
+    follow: "لماذا كان هذا الهدف مهمًا بالنسبة إليكِ في ذلك الوقت؟" },
+  { q: "ما الذي دفعك إلى اختيار هذا التصرف تحديدًا؟",
+    opts: ["اعتمدت على تجربة سابقة","رأيت أنه الحل الأنسب في تلك اللحظة","لم يكن لدي وقت كافٍ للتفكير في بديل","اعتدت استخدام هذا الأسلوب","اتبعت تعليمات المدرسة أو إجراءاتها","سبب آخر"],
+    follow: "كيف أثّر هذا السبب في قرارك؟" },
+  { q: "ماذا حدث بعد أن اتخذتِ هذا الإجراء؟",
+    opts: ["تحسن الموقف","لم يتغير الموقف","أصبح الموقف أكثر صعوبة","لاحظت نتيجة مختلفة عما توقعت","لم أتمكن من تحديد النتيجة"],
+    follow: "ما الذي لاحظتِه وجعلك تختارين هذه الإجابة؟" },
+  { q: "عندما تفكرين في الموقف الآن، هل هناك جانب ربما لم تنتبهي إليه في حينه؟",
+    opts: ["ربما كان هناك سبب آخر لتصرف الطالبة","ربما أثرت مشاعري في قراري","ربما اعتمدت على افتراض سابق","ربما لم أفهم احتياجات الطالبات بصورة كاملة","لا أرى أنني أغفلت جانبًا مهمًا","لست متأكدة"],
+    follow: "ما الذي يدفعك إلى التفكير في هذا الاحتمال؟" },
+  { q: "لو واجهتِ الموقف نفسه مرة أخرى، كيف يمكن أن تتصرفي؟",
+    opts: ["سأكرر التصرف نفسه","سأغير طريقة تعاملي","سأمنح الطالبات فرصة لتوضيح وجهات نظرهن","سأستخدم استراتيجية تدريس مختلفة","سأطلب المساعدة أو الاستشارة","لم أحدد بعد ما هو الأنسب"],
+    follow: "لماذا ترين أن هذا الخيار مناسب؟" },
+  { q: "ما الذي يمكن أن يساعدك على التحقق من ملاءمة قرارك؟",
+    opts: ["الاستماع إلى وجهة نظر الطالبة أو الطالبات","ملاحظة تفاعلهن وسلوكهن","مراجعة أعمالهن أو إجاباتهن","استشارة زميلة أو المرشدة الطلابية","تجربة طريقة مختلفة وملاحظة أثرها","وسيلة أخرى"],
+    follow: "كيف يمكنك الاستفادة من هذه الوسيلة في موقف مشابه؟" },
+  { q: "ما الخطوة البسيطة التي يمكنك تجربتها في الحصة القادمة؟",
+    opts: ["تغيير طريقة الشرح أو النشاط","زيادة مشاركة الطالبات","التحقق من أسباب السلوك قبل اتخاذ القرار","تحسين طريقة التواصل مع الطالبات","متابعة موقف معين بصورة أدق","خطوة أخرى"],
+    follow: "كيف ستطبقين هذه الخطوة عمليًا؟" },
+  { q: "كيف ستعرفين أن الخطوة التي جرّبتِها حققت أثرًا إيجابيًا؟",
+    opts: ["ملاحظة تحسن مشاركة الطالبات","ملاحظة تغير في السلوك","مقارنة إجابات الطالبات أو نتائجهن","سؤال الطالبات عن تجربتهن","متابعة تكرار الموقف وأسبابه","مؤشر آخر"],
+    follow: "ما الدليل الذي ستوثقينه بعد التطبيق؟" },
+  { q: "بعد مراجعة الموقف، ما الذي اكتشفتِه عن طريقة تدريسك أو قراراتك؟",
+    opts: ["أدركت أنني أتعجل أحيانًا في اتخاذ القرار","انتبهت إلى احتياج لم أكن أضعه في الحسبان","اكتشفت وجود بدائل أخرى","تعرفت على نقطة قوة في ممارستي","تأكدت من ملاءمة تصرفي، وأدركت أهمية التحقق من أثره","ما زلت بحاجة إلى مزيد من التفكير"],
+    follow: "هل يمكنك التعبير عن هذا الاكتشاف بكلماتك؟" },
+  { q: "إذا واجهتِ موقفًا مشابهًا مستقبلًا، فما أهم أمر ستحرصين عليه؟",
+    opts: ["فهم أسباب الموقف قبل إصدار حكم","التفكير في أكثر من حل","مراعاة احتياجات الطالبات","الاستناد إلى الملاحظات والأدلة","متابعة أثر القرار بعد تطبيقه","أمر آخر"],
+    follow: "اكتبي لنفسك تذكيرًا قصيرًا تستفيدين منه في الحصة القادمة." }
+];
+const N = QUESTIONS.length;
+// Follow-up questions keyed by fixed option index (same order as QUESTIONS[i].opts).
+// null = no follow-up; string = one fixed follow-up; array = one follow-up per option.
+const FOLLOW = [
+  null,
+  null,
+  "لماذا كان هذا الهدف مهمًا بالنسبة لك في ذلك الموقف؟",
+  ["ما أوجه التشابه بين الموقف الحالي وتجربتك السابقة؟",
+   "ما الذي جعلك تعتقدين أنه الأنسب؟",
+   "كيف أثّر ضيق الوقت في قرارك؟",
+   "هل ترين أن هذا الأسلوب يناسب جميع المواقف؟ ولماذا؟",
+   "كيف ساعدتك هذه التعليمات في التعامل مع الموقف؟",
+   "كيف أثّر هذا السبب في قرارك؟"],
+  ["ما الذي لاحظتِه وجعلك تعتقدين أن الموقف تحسن؟",
+   "ما السبب الذي قد يفسر عدم تغير الموقف؟",
+   "ما الذي تعتقدين أنه ساهم في زيادة صعوبة الموقف؟",
+   "كيف اختلفت النتيجة عما كنتِ تتوقعينه؟",
+   "ما الذي يمكنك ملاحظته لاحقًا لتحديد أثر تصرفك؟"],
+  ["ما التفسير الآخر الذي يمكن أن يساعدك على فهم الموقف؟",
+   "كيف يمكن أن تكون مشاعرك قد أثرت في طريقة استجابتك؟",
+   "كيف يمكنك التحقق من صحة هذا الافتراض؟",
+   "كيف يمكنك التعرف على احتياجاتهن بصورة أفضل؟",
+   "ما الأدلة التي تجعلك واثقة من ذلك؟",
+   "ما المعلومات التي تحتاجين إليها لفهم الموقف بصورة أوضح؟"],
+  ["ما الذي يجعلك ترين أن تكرار التصرف هو الخيار الأنسب؟",
+   "ما التغيير الذي ترغبين في تجربته؟",
+   "كيف يمكن أن يساعدك الاستماع إليهن؟",
+   "ما الاستراتيجية التي ترغبين في تجربتها؟",
+   "ما الذي تتوقعين أن تضيفه لك الاستشارة؟",
+   "ما الخيار الذي ترغبين في استكشافه أولًا؟"],
+  "كيف يمكنك استخدام هذه الطريقة للتحقق من أثر قرارك؟",
+  "كيف ستطبقين هذه الخطوة في موقف تدريسي مشابه؟",
+  "ما الدليل المحدد الذي ستعتمدين عليه لمعرفة ما إذا حدث تحسن؟",
+  "ما الذي تعلمتِه عن ممارستك التدريسية من خلال هذا الموقف؟",
+  "اكتبي تذكيرًا قصيرًا لنفسك يساعدك في المواقف القادمة."
+];
+// Index of the "other" option, for questions that have one.
+const OTHER = { 0: 5, 1: 4, 2: 5, 3: 5, 7: 5, 8: 5, 9: 5, 11: 5 };
+function followFor(i, c) {
+  const f = FOLLOW[i];
+  if (c === null || c === undefined || !f) return null;
+  return Array.isArray(f) ? (f[c] || null) : f;
+}
+function followKey(i, c) {
+  const f = FOLLOW[i];
+  if (c === null || c === undefined || !f) return "";
+  return i + ":" + (Array.isArray(f) ? c : 0);
+}
+const KEY = "muhaqqiq-taammuli-v1";
+
+let state = { view: "home", step: 0, answers: {}, counted: false };
+let memoryOnly = false;
+try {
+  const raw = localStorage.getItem(KEY);
+  if (raw) {
+    const s = JSON.parse(raw);
+    if (s && typeof s === "object") {
+      state.view = ["home", "session", "done"].includes(s.view) ? s.view : "home";
+      state.step = Math.min(Math.max(parseInt(s.step) || 0, 0), N - 1);
+      state.answers = s.answers && typeof s.answers === "object" ? s.answers : {};
+      // Sessions saved before the counter existed are not counted.
+      state.counted = s.counted === undefined ? Object.keys(state.answers).length > 0 : !!s.counted;
+    }
+  }
+} catch (e) { memoryOnly = true; }
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); memoryOnly = false; } catch (e) { memoryOnly = true; }
+}
+// Drop any saved follow-up text that does not belong to the current follow-up question.
+for (let i = 0; i < N; i++) {
+  const a = state.answers[i];
+  if (!a || typeof a !== "object") { delete state.answers[i]; continue; }
+  a.text = typeof a.text === "string" ? a.text : "";
+  a.choice = Number.isInteger(a.choice) && a.choice >= 0 && a.choice < QUESTIONS[i].opts.length ? a.choice : null;
+  const fk = followKey(i, a.choice);
+  if (a.fk !== fk) { a.follow = ""; a.fk = fk; }
+  a.follow = typeof a.follow === "string" ? a.follow : "";
+  a.other = a.choice !== null && a.choice === OTHER[i] && typeof a.other === "string" ? a.other : "";
+}
+let helpOpen = {};
+let changing = {};
+
+const $ = (s) => document.querySelector(s);
+const view = $("#view");
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const ans = (i) => state.answers[i] || (state.answers[i] = { text: "", choice: null, follow: "", fk: "", other: "" });
+
+// ---------- Feedback link and usage counter ----------
+const FORM_URL = "https://forms.gle/if3XBZ3w3FGXa3ZM7";
+const API = "/api/sessions";
+let totalCount = null;     // only ever set from a real server answer
+let counting = false;
+let evalOn = null;
+
+// The feedback form unlocks once the reflection session is complete.
+function updateEvalNav() {
+  const on = firstMissing() === undefined;
+  if (on === evalOn) return;
+  evalOn = on;
+  $("#evalLi").innerHTML = on
+    ? `<a class="nav" href="${FORM_URL}" target="_blank" rel="noopener noreferrer">تقييم التجربة</a>`
+    : `<button class="nav" type="button" disabled>تقييم التجربة <span class="tag">بعد اكتمال الجلسة</span></button>`;
+}
+function updateCountEl() {
+  const el = $("#countLine");
+  if (!el) return;
+  if (totalCount === null) { el.hidden = true; return; }
+  el.textContent = "عدد جلسات التأمل: " + totalCount.toLocaleString("en");
+  el.hidden = false;
+}
+async function api(opts) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 6000);
+  try { return await fetch(API, { cache: "no-store", signal: ctl.signal, ...opts }); }
+  finally { clearTimeout(t); }
+}
+async function loadCount() {
+  try {
+    const r = await api({});
+    if (!r.ok) return;
+    const d = await r.json();
+    if (typeof d.total === "number") { totalCount = d.total; updateCountEl(); }
+  } catch (e) { /* no number is shown when the service is unreachable */ }
+}
+// Counts one start per session. Failures never affect the tool.
+async function countStart() {
+  if (state.counted || counting) return;
+  counting = true;
+  try {
+    const r = await api({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event: "start" }) });
+    if (r.ok || r.status === 429) {
+      state.counted = true; save();
+      if (r.ok) { const d = await r.json(); if (typeof d.total === "number") { totalCount = d.total; updateCountEl(); } }
+    }
+  } catch (e) { /* try again at the next start */ }
+  finally { counting = false; }
+}
+
+function render() {
+  document.querySelectorAll(".nav[data-go]").forEach((b) => {
+    const on = b.dataset.go === (state.view === "home" ? "home" : state.view === "done" ? "results" : "session");
+    if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+  updateEvalNav();
+  if (state.view === "home") renderHome();
+  else if (state.view === "done") renderDone();
+  else renderQuestion();
+}
+
+function renderHome() {
+  const started = Object.values(state.answers).some((a) => a && (a.text || a.follow || a.choice !== null));
+  view.innerHTML = `
+    <section class="home">
+      <h2>لنتأمل موقفًا من فصلك</h2>
+      <p>أداة تساعدك على التأمل في موقف حقيقي من فصلك من خلال أسئلة متدرجة. تُحفظ إجاباتك على جهازك فقط.</p>
+      <button class="btn btn-primary" type="button" id="startBtn">${started ? "أكملي جلسة التأمل" : "ابدئي جلسة التأمل"}</button>
+      <p class="count" id="countLine" hidden></p>
+    </section>`;
+  updateCountEl(); loadCount();
+  $("#startBtn").onclick = () => go("session");
+}
+
+function renderQuestion() {
+  const i = state.step, d = QUESTIONS[i], a = ans(i);
+  const phaseName = PHASES[Math.floor(i / 2)];
+  const open = !!helpOpen[i] || a.choice !== null;
+  const last = i === N - 1;
+  view.innerHTML = `
+    <div class="prog" role="group" aria-label="مؤشر التقدم">
+      <div class="prog-row"><span>السؤال ${i + 1} من ${N}</span></div>
+      <div class="bar" role="progressbar" aria-valuemin="1" aria-valuemax="${N}" aria-valuenow="${i + 1}"><i style="width:${((i + 1) / N) * 100}%"></i></div>
+    </div>
+    <p class="phase">${esc(phaseName)}</p>
+    <h2 class="q">${esc(d.q)}</h2>
+    ${d.hint ? `<p class="hint"><b>توضيح:</b> ${esc(d.hint)}</p>` : ""}
+    <label class="lbl" for="ans">إجابتك</label>
+    <textarea id="ans" placeholder="اكتبي إجابتك هنا"></textarea>
+    <div class="help-wrap">
+      <button class="btn btn-ghost" type="button" id="helpBtn" aria-expanded="${open}" aria-controls="opts">ساعديني على التفكير</button>
+      <div class="opts" id="opts" ${open ? "" : "hidden"}></div>
+    </div>
+    <p class="saved" id="nudge" hidden>اكتبي تفسيرك الشخصي في مساحة الإجابة.</p>
+    <div class="follow" id="otherBox" hidden>
+      <label class="lbl" for="other">اكتبي التفاصيل</label>
+      <textarea id="other" class="sm" placeholder="اكتبي إجابتك هنا"></textarea>
+    </div>
+    <div class="follow" id="followBox" hidden>
+      <label class="lbl" for="follow" id="followLbl"></label>
+      <textarea id="follow" placeholder="اكتبي إجابتك هنا"></textarea>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" type="button" id="prevBtn" ${i === 0 ? "disabled" : ""}>السابق</button>
+      <button class="btn btn-primary" type="button" id="nextBtn">${last ? "إنهاء الجلسة" : "التالي"}</button>
+    </div>
+    <p class="saved">${memoryOnly ? "تعذر الحفظ في هذا المتصفح. ستبقى الإجابات حتى تغلقين الصفحة." : "تُحفظ إجاباتك تلقائيًا على هذا الجهاز."}</p>`;
+
+  const ta = $("#ans"), fo = $("#follow"), ot = $("#other");
+  ta.value = a.text; fo.value = a.follow; ot.value = a.other;
+  ta.oninput = () => { a.text = ta.value; save(); syncBranch(); updateEvalNav(); };
+  fo.oninput = () => { a.follow = fo.value; save(); };
+  ot.oninput = () => { a.other = ot.value; save(); };
+
+  // Show the follow-up (if any) and the "other" details box for the current choice only.
+  function syncBranch() {
+    const f = followFor(i, a.choice);
+    $("#followBox").hidden = !f;
+    $("#followLbl").textContent = f || "";
+    $("#otherBox").hidden = !(a.choice !== null && a.choice === OTHER[i]);
+    $("#nudge").hidden = !(a.choice !== null && !a.text.trim());
+  }
+  syncBranch();
+
+  $("#helpBtn").onclick = () => {
+    if (a.choice !== null) return; // options stay visible while a choice is selected
+    helpOpen[i] = !helpOpen[i];
+    $("#opts").hidden = !helpOpen[i];
+    $("#helpBtn").setAttribute("aria-expanded", String(!!helpOpen[i]));
+  };
+  // Options: all shown while choosing; once chosen, only the selected one plus a "change" link.
+  function renderOpts() {
+    const box = $("#opts");
+    const collapsed = a.choice !== null && !changing[i];
+    const list = collapsed ? [a.choice] : d.opts.map((_, k) => k);
+    box.innerHTML = list.map((k) => `<button class="opt" type="button" data-k="${k}" aria-pressed="${a.choice === k}">${esc(d.opts[k])}</button>`).join("")
+      + (collapsed ? `<button class="link-btn" type="button" id="changeBtn">تغيير الاختيار</button>` : "");
+    box.querySelectorAll(".opt").forEach((b) => {
+      b.onclick = () => {
+        const k = +b.dataset.k;
+        if (collapsed) return;
+        a.choice = k;
+        helpOpen[i] = true; changing[i] = false;
+        // A different follow-up question must not inherit the previous answer.
+        const fk = followKey(i, a.choice);
+        if (a.fk !== fk) { a.follow = ""; fo.value = ""; a.fk = fk; }
+        if (a.choice !== OTHER[i]) { a.other = ""; ot.value = ""; }
+        save();
+        renderOpts(); syncBranch();
+      };
+    });
+    const cb = $("#changeBtn");
+    if (cb) cb.onclick = () => { changing[i] = true; renderOpts(); };
+  }
+  renderOpts();
+  $("#prevBtn").onclick = () => step(-1);
+  $("#nextBtn").onclick = () => step(1);
+}
+
+function step(dir) {
+  const n = state.step + dir;
+  if (n >= N) state.view = "done";
+  else if (n >= 0) state.step = n;
+  save(); render(); window.scrollTo(0, 0);
+}
+
+// ---------- Report ----------
+const RULES = [
+  { id: "A", on: () => choiceOf(5) === 2,
+    text: "قد تؤثر الخبرات السابقة في تفسير المواقف الجديدة. من المفيد التحقق من ظروف الموقف الحالي قبل الاعتماد على تفسير سابق." },
+  { id: "B", on: () => choiceOf(5) === 0 || choiceOf(5) === 3,
+    text: "قد تتأثر استجابات الطالبات بعوامل لا تظهر مباشرة أثناء الحصة. يساعد الاستماع إلى وجهات نظرهن على تكوين صورة أكثر اكتمالًا للموقف." },
+  { id: "C", on: () => choiceOf(5) === 1,
+    text: "قد تؤثر الانفعالات اللحظية في طريقة الاستجابة للمواقف الصفية. يساعد التمهل، متى كان ممكنًا، على مراجعة البدائل قبل اتخاذ القرار." },
+  { id: "D", on: () => choiceOf(4) === 4,
+    text: "قد يصعب الحكم على فاعلية القرار دون أدلة واضحة. يمكن تحديد مؤشر بسيط وملاحظته في المواقف القادمة قبل استخلاص النتيجة." },
+  { id: "E", on: () => choiceOf(4) === 1 || choiceOf(4) === 2,
+    text: "عدم تحقق النتيجة المتوقعة فرصة لمراجعة الإجراء والظروف المحيطة به، وتجربة بديل مناسب مع متابعة أثره." },
+  { id: "F", on: () => choiceOf(4) === 0,
+    text: "من المفيد تحديد الأدلة التي تشير إلى التحسن، والتحقق مما إذا كان مرتبطًا بالإجراء المتخذ أو بعوامل أخرى." },
+  { id: "G", on: () => choiceOf(6) === 0,
+    text: "قد يكون تكرار الإجراء مناسبًا إذا دعمت الأدلة فاعليته. ويمكن أيضًا التفكير في الظروف التي قد تستدعي استجابة مختلفة." },
+  { id: "H", on: () => choiceOf(6) === 5,
+    text: "ليس من الضروري الوصول إلى حل فوري. يمكن البدء بتجربة تغيير صغير أو الاستفادة من خبرة زميلة، ثم مراجعة النتائج." }
+]; // array order = priority order
+const NO_RULE = "يمكنك العودة إلى إجاباتك والتفكير في الأدلة التي تدعم قراراتك، والبدائل الممكنة في المواقف المشابهة.";
+const choiceOf = (i) => { const a = state.answers[i]; return a && Number.isInteger(a.choice) ? a.choice : null; };
+
+// Pieces of one answer. Follow-up text counts only if it belongs to the current follow-up question.
+function parts(i) {
+  const a = state.answers[i] || {};
+  const c = choiceOf(i);
+  const fq = followFor(i, c);
+  const fOk = fq && a.fk === followKey(i, c) && (a.follow || "").trim();
+  return {
+    chip: c !== null ? QUESTIONS[i].opts[c] : "",
+    text: (a.text || "").trim(),
+    other: c !== null && c === OTHER[i] ? (a.other || "").trim() : "",
+    fq: fOk ? fq : "",
+    follow: fOk ? a.follow.trim() : ""
+  };
+}
+const para = (t) => `<p class="ans">${esc(t)}</p>`;
+const NONE = `<p class="none">لم تُسجّل إجابة</p>`;
+// mode: all | main | follow. quiet: return "" instead of the empty notice.
+function entry(i, mode = "all", quiet = false) {
+  const p = parts(i);
+  let h = "";
+  if (mode !== "follow") {
+    if (p.chip) h += `<span class="chip">${esc(p.chip)}</span>`;
+    if (p.text) h += para(p.text);
+    if (p.other) h += para(p.other);
+  }
+  if (mode !== "main" && p.follow) {
+    h += mode === "follow" ? para(p.follow) : `<p class="fq">${esc(p.fq)}</p>${para(p.follow)}`;
+  }
+  return h || (quiet ? "" : NONE);
+}
+const item = (cap, html) => `<div class="item"><h4>${esc(cap)}</h4>${html}</div>`;
+const group = (title, items) => `<div class="group"><h3>${esc(title)}</h3>${items.join("")}</div>`;
+
+// Questions (0-based) that need a real written answer before the report can be shown.
+const REQUIRED = [0, 1, 3, 4, 5, 8, 9, 10];
+const hasText = (i) => !!(state.answers[i] && typeof state.answers[i].text === "string" && state.answers[i].text.trim());
+const firstMissing = () => REQUIRED.find((i) => !hasText(i));
+
+function renderDone() {
+  const miss = firstMissing();
+  if (miss !== undefined) {
+    view.innerHTML = `
+      <section class="done">
+        <p>تقريرك التأملي لم يكتمل بعد. أكملي إجاباتك أولًا لعرض النتائج.</p>
+        <button class="btn btn-primary" type="button" id="contBtn">متابعة جلسة التأمل</button>
+      </section>`;
+    $("#contBtn").onclick = () => { state.view = "session"; state.step = miss; save(); render(); window.scrollTo(0, 0); };
+    return;
+  }
+  const notes = RULES.filter((r) => r.on()).slice(0, 3);
+  const p9 = parts(8);
+  const hasAction = !!p9.text;
+  const q7 = entry(6, "all", true);
+  const q10main = entry(9, "main", true);
+
+  const personal =
+    group("الموقف التدريسي", [item("وصف الموقف", entry(0)), item("تصرفي", entry(1))]) +
+    group("فهم قراري", [item("الهدف من التصرف", entry(2)), item("أسباب اتخاذ القرار", entry(3))]) +
+    group("مراجعة ما حدث", [item("نتيجة التصرف", entry(4)), item("ما أعدت التفكير فيه", entry(5))]) +
+    group("ما تعلمته", [item("اكتشافي", entry(10)), item("تذكيري لنفسي", entry(11, "follow"))]);
+
+  const plan = [
+    item("ما الذي سأفعله؟", hasAction ? entry(8, "main")
+      : `<p class="none">لم يتم تحديد إجراء بعد</p><button class="link-btn no-print" type="button" data-goto="8">تعديل إجابة السؤال 9</button>`
+      ) + (q7 ? `<p class="sub">عند مواجهة موقف مشابه</p>${q7}` : ""),
+    item("كيف سأطبقه؟", entry(8, "follow")),
+    item("كيف سأتحقق من أثره؟", entry(7) + (q10main ? `<p class="sub">مؤشر المتابعة</p>${q10main}` : "")),
+    item("ما الدليل الذي سأبحث عنه؟", entry(9, "follow"))
+  ].join("");
+
+  view.innerHTML = `
+    <section class="report">
+      <div class="rep-head">
+        <h2>تقريري التأملي</h2>
+        <div class="row no-print">
+          <button class="btn btn-ghost" type="button" id="editBtn">تعديل إجاباتي</button>
+          <button class="btn btn-ghost" type="button" id="printBtn">طباعة التقرير / حفظ PDF</button>
+          <button class="btn btn-ghost" type="button" id="resetBtn">بدء تأمل جديد</button>
+        </div>
+        <p class="saved no-print" id="printHint" hidden>إذا لم تظهر نافذة الطباعة، افتحي الأداة في نافذة المتصفح ثم اضغطي Ctrl+P.</p>
+        <div id="confirmBox" class="no-print"></div>
+      </div>
+      <div class="sec"><h2 class="sec-h">تأملي الشخصي</h2>${personal}</div>
+      <div class="sec"><h2 class="sec-h">زوايا إضافية للتفكير</h2>
+        <ul class="notes">${(notes.length ? notes.map((r) => r.text) : [NO_RULE]).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
+      </div>
+      <div class="sec"><h2 class="sec-h">خطتي للتحسين</h2><div class="plan">${plan}</div></div>
+    </section>`;
+
+  $("#editBtn").onclick = () => { state.view = "session"; state.step = N - 1; save(); render(); window.scrollTo(0, 0); };
+  $("#printBtn").onclick = () => { $("#printHint").hidden = false; try { window.print(); } catch (e) {} };
+  view.querySelectorAll("[data-goto]").forEach((b) => (b.onclick = () => { state.view = "session"; state.step = +b.dataset.goto; save(); render(); window.scrollTo(0, 0); }));
+  $("#resetBtn").onclick = () => {
+    $("#confirmBox").innerHTML = `<div class="confirm"><p>سيتم حذف كل إجاباتك المحفوظة والتقرير الحالي. هل تريدين المتابعة؟</p>
+      <div class="row"><button class="btn btn-primary" type="button" id="yesReset">نعم، ابدئي تأملًا جديدًا</button>
+      <button class="btn btn-ghost" type="button" id="noReset">إلغاء</button></div></div>`;
+    $("#yesReset").onclick = () => { state = { view: "session", step: 0, answers: {}, counted: false }; helpOpen = {}; changing = {}; save(); render(); window.scrollTo(0, 0); countStart(); };
+    $("#noReset").onclick = () => { $("#confirmBox").innerHTML = ""; };
+  };
+}
+
+function go(v) {
+  state.view = v === "results" ? "done" : v === "session" ? "session" : "home";
+  save(); render(); window.scrollTo(0, 0);
+  if (v === "session") countStart();
+  if (mobile()) setSide(false);
+}
+
+const side = $("#side"), menuBtn = $("#menuBtn"), backdrop = $("#backdrop");
+const mobile = () => window.matchMedia("(max-width: 800px)").matches;
+function setSide(open) {
+  side.hidden = !open;
+  menuBtn.setAttribute("aria-expanded", String(open));
+  backdrop.hidden = !(open && mobile());
+}
+menuBtn.onclick = () => setSide(side.hidden);
+backdrop.onclick = () => setSide(false);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && mobile()) setSide(false); });
+document.querySelectorAll(".nav[data-go]").forEach((b) => (b.onclick = () => go(b.dataset.go)));
+setSide(!mobile());
+
+render();
+</script>
+</body>
+</html>
