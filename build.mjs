@@ -1,5 +1,5 @@
 // Wraps src/app.html in a full HTML document and writes public/index.html.
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
 const src = readFileSync(new URL("./src/app.html", import.meta.url), "utf8");
 const cut = src.indexOf('<header class="top">');
 if (cut < 0) throw new Error("header marker not found");
@@ -16,4 +16,6 @@ ${src.slice(cut)}</body>
 `;
 mkdirSync(new URL("./public/", import.meta.url), { recursive: true });
 writeFileSync(new URL("./public/index.html", import.meta.url), html);
-console.log("built public/index.html");
+// The approved banner is served from the site itself at /banner.png.
+copyFileSync(new URL("./Reflective Teaching Tool Banner.png", import.meta.url), new URL("./public/banner.png", import.meta.url));
+console.log("built public/index.html and public/banner.png");
