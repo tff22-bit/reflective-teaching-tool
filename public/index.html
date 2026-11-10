@@ -146,13 +146,18 @@ textarea {
 }
 textarea:focus { border-color: var(--focus); outline: 0; box-shadow: 0 0 0 3px var(--teal-soft); }
 .help-wrap { margin-top: 14px; }
-.opts { margin-top: 12px; display: grid; gap: 8px; }
+.opts { margin-top: 16px; display: grid; gap: 8px; }
 .opt {
-  text-align: start; width: 100%; padding: 9px 14px; border-radius: 10px; min-height: 42px; font-size: .95rem;
+  display: flex; align-items: center; gap: 10px; text-align: start; width: 100%; padding: 9px 14px; border-radius: 10px; min-height: 42px; font-size: .95rem;
   background: var(--surface); border: 1px solid var(--line);
 }
+.opt .mk { flex: none; position: relative; width: 18px; height: 18px; border: 1.5px solid var(--muted); border-radius: 50%; }
+.opt.multi .mk { border-radius: 5px; }
 .opt:hover { border-color: var(--teal); }
-.opt[aria-pressed="true"] { background: var(--teal-soft); border-color: var(--teal); font-weight: 600; color: var(--teal); }
+.opt[aria-checked="true"] { background: var(--teal-soft); border-color: var(--teal); font-weight: 600; color: var(--teal); }
+.opt[aria-checked="true"] .mk { background: var(--teal); border-color: var(--teal); }
+.opt.single[aria-checked="true"] .mk::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--on-teal); }
+.opt.multi[aria-checked="true"] .mk::after { content: ""; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid var(--on-teal); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .follow { margin-top: 20px; padding-inline-start: 14px; border-inline-start: 2px solid var(--gold); }
 .follow .lbl { margin-top: 0; color: var(--teal); font-weight: 600; font-size: .95rem; }
 textarea.sm { min-height: 84px; }
@@ -184,6 +189,7 @@ textarea.sm { min-height: 84px; }
 .fq { margin: 8px 0 2px; font-size: .82rem; color: var(--muted); }
 .sub { margin: 10px 0 2px; font-size: .82rem; color: var(--muted); }
 .none { margin: 0; color: var(--muted); font-size: .9rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
 .chip { justify-self: start; display: inline-block; padding: 1px 12px; margin-bottom: 4px; border-radius: 99px; background: var(--teal-soft); color: var(--teal); font-size: .85rem; font-weight: 600; }
 .notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; }
 .notes li { padding-inline-start: 14px; border-inline-start: 2px solid var(--teal-soft); font-size: 1rem; line-height: 1.85; }
@@ -284,105 +290,369 @@ document.documentElement.dir = "rtl";
 document.documentElement.lang = "ar";
 
 const PHASES = [
-  "المرحلة الأولى: فهم الموقف",
-  "المرحلة الثانية: فهم القرار",
-  "المرحلة الثالثة: مراجعة ما حدث",
-  "المرحلة الرابعة: استكشاف البدائل",
-  "المرحلة الخامسة: التخطيط للتحسين",
-  "المرحلة السادسة: التأمل الشخصي"
+  "المرحلة 1 — فهم الموقف والقرار",
+  "المرحلة 2 — مراجعة القرار",
+  "المرحلة 3 — البدائل والأدلة",
+  "المرحلة 4 — خطة التحسين"
 ];
-// two questions per phase
+// Stable ids: questions and options are referenced by id, never by text.
 const QUESTIONS = [
-  { q: "حدثيني عن موقف وقع في الفصل ولفت انتباهك.",
-    hint: "ليس بالضرورة أن يكون موقفًا صعبًا؛ فقد يكون تجربة ناجحة أو موقفًا لم يسر كما توقعتِ.",
-    opts: ["موقف مع طالبة أو مجموعة من الطالبات","موقف أثناء شرح الدرس","موقف يتعلق بالتفاعل والمشاركة","موقف يتعلق بإدارة الفصل","موقف ناجح أود فهم أسباب نجاحه","موقف آخر"],
-    follow: "هل يمكنك وصف ما حدث في هذا الموقف؟" },
-  { q: "كيف تصرفتِ في ذلك الوقت؟",
-    opts: ["تدخلت مباشرة","غيّرت طريقة الشرح أو النشاط","تحدثت مع الطالبة أو الطالبات","واصلت الحصة دون تدخل","اتخذت إجراءً آخر"],
-    follow: "كيف نفذتِ هذا التصرف؟" },
-  { q: "ما الهدف الأساسي الذي كنتِ تسعين إلى تحقيقه من تصرفك؟",
-    opts: ["المحافظة على نظام الفصل","مساعدة الطالبات على الفهم","المحافظة على سلامة الطالبات","تشجيع المشاركة والتفاعل","مواصلة الحصة دون تعطيل","هدف آخر"],
-    follow: "لماذا كان هذا الهدف مهمًا بالنسبة إليكِ في ذلك الوقت؟" },
-  { q: "ما الذي دفعك إلى اختيار هذا التصرف تحديدًا؟",
-    opts: ["اعتمدت على تجربة سابقة","رأيت أنه الحل الأنسب في تلك اللحظة","لم يكن لدي وقت كافٍ للتفكير في بديل","اعتدت استخدام هذا الأسلوب","اتبعت تعليمات المدرسة أو إجراءاتها","سبب آخر"],
-    follow: "كيف أثّر هذا السبب في قرارك؟" },
-  { q: "ماذا حدث بعد أن اتخذتِ هذا الإجراء؟",
-    opts: ["تحسن الموقف","لم يتغير الموقف","أصبح الموقف أكثر صعوبة","لاحظت نتيجة مختلفة عما توقعت","لم أتمكن من تحديد النتيجة"],
-    follow: "ما الذي لاحظتِه وجعلك تختارين هذه الإجابة؟" },
-  { q: "عندما تفكرين في الموقف الآن، هل هناك جانب ربما لم تنتبهي إليه في حينه؟",
-    opts: ["ربما كان هناك سبب آخر لتصرف الطالبة","ربما أثرت مشاعري في قراري","ربما اعتمدت على افتراض سابق","ربما لم أفهم احتياجات الطالبات بصورة كاملة","لا أرى أنني أغفلت جانبًا مهمًا","لست متأكدة"],
-    follow: "ما الذي يدفعك إلى التفكير في هذا الاحتمال؟" },
-  { q: "لو واجهتِ الموقف نفسه مرة أخرى، كيف يمكن أن تتصرفي؟",
-    opts: ["سأكرر التصرف نفسه","سأغير طريقة تعاملي","سأمنح الطالبات فرصة لتوضيح وجهات نظرهن","سأستخدم استراتيجية تدريس مختلفة","سأطلب المساعدة أو الاستشارة","لم أحدد بعد ما هو الأنسب"],
-    follow: "لماذا ترين أن هذا الخيار مناسب؟" },
-  { q: "ما الذي يمكن أن يساعدك على التحقق من ملاءمة قرارك؟",
-    opts: ["الاستماع إلى وجهة نظر الطالبة أو الطالبات","ملاحظة تفاعلهن وسلوكهن","مراجعة أعمالهن أو إجاباتهن","استشارة زميلة أو المرشدة الطلابية","تجربة طريقة مختلفة وملاحظة أثرها","وسيلة أخرى"],
-    follow: "كيف يمكنك الاستفادة من هذه الوسيلة في موقف مشابه؟" },
-  { q: "ما الخطوة البسيطة التي يمكنك تجربتها في الحصة القادمة؟",
-    opts: ["تغيير طريقة الشرح أو النشاط","زيادة مشاركة الطالبات","التحقق من أسباب السلوك قبل اتخاذ القرار","تحسين طريقة التواصل مع الطالبات","متابعة موقف معين بصورة أدق","خطوة أخرى"],
-    follow: "كيف ستطبقين هذه الخطوة عمليًا؟" },
-  { q: "كيف ستعرفين أن الخطوة التي جرّبتِها حققت أثرًا إيجابيًا؟",
-    opts: ["ملاحظة تحسن مشاركة الطالبات","ملاحظة تغير في السلوك","مقارنة إجابات الطالبات أو نتائجهن","سؤال الطالبات عن تجربتهن","متابعة تكرار الموقف وأسبابه","مؤشر آخر"],
-    follow: "ما الدليل الذي ستوثقينه بعد التطبيق؟" },
-  { q: "بعد مراجعة الموقف، ما الذي اكتشفتِه عن طريقة تدريسك أو قراراتك؟",
-    opts: ["أدركت أنني أتعجل أحيانًا في اتخاذ القرار","انتبهت إلى احتياج لم أكن أضعه في الحسبان","اكتشفت وجود بدائل أخرى","تعرفت على نقطة قوة في ممارستي","تأكدت من ملاءمة تصرفي، وأدركت أهمية التحقق من أثره","ما زلت بحاجة إلى مزيد من التفكير"],
-    follow: "هل يمكنك التعبير عن هذا الاكتشاف بكلماتك؟" },
-  { q: "إذا واجهتِ موقفًا مشابهًا مستقبلًا، فما أهم أمر ستحرصين عليه؟",
-    opts: ["فهم أسباب الموقف قبل إصدار حكم","التفكير في أكثر من حل","مراعاة احتياجات الطالبات","الاستناد إلى الملاحظات والأدلة","متابعة أثر القرار بعد تطبيقه","أمر آخر"],
-    follow: "اكتبي لنفسك تذكيرًا قصيرًا تستفيدين منه في الحصة القادمة." }
+ {
+  "id": "situation",
+  "phase": 0,
+  "type": "text",
+  "q": "صفي موقفًا تدريسيًا حدث معك وترغبين في التأمل فيه.",
+  "hint": "ماذا حدث؟ ومن شارك في الموقف؟ دون ذكر أسماء الطالبات."
+ },
+ {
+  "id": "action",
+  "phase": 0,
+  "type": "single_text",
+  "q": "كيف تعاملتِ مع الموقف؟",
+  "opts": [
+   {
+    "id": "direct",
+    "label": "تدخلت مباشرة."
+   },
+   {
+    "id": "change_method",
+    "label": "غيّرت طريقة الشرح أو النشاط."
+   },
+   {
+    "id": "dialogue",
+    "label": "تحاورت مع الطالبة أو الطالبات."
+   },
+   {
+    "id": "reinforce",
+    "label": "استخدمت أسلوبًا للتعزيز أو التوجيه."
+   },
+   {
+    "id": "observe_first",
+    "label": "فضّلت الملاحظة قبل التدخل."
+   },
+   {
+    "id": "other",
+    "label": "تصرف آخر."
+   }
+  ],
+  "other": "other",
+  "writeQ": "صفي باختصار ما فعلتِه."
+ },
+ {
+  "id": "goal",
+  "phase": 0,
+  "type": "single",
+  "q": "ما الهدف الأساسي من تصرفك؟",
+  "opts": [
+   {
+    "id": "understanding",
+    "label": "تحسين فهم الطالبات."
+   },
+   {
+    "id": "participation",
+    "label": "تعزيز المشاركة والتفاعل."
+   },
+   {
+    "id": "behavior",
+    "label": "التعامل مع سلوك صفي."
+   },
+   {
+    "id": "needs",
+    "label": "مراعاة احتياجات الطالبات."
+   },
+   {
+    "id": "pacing",
+    "label": "تنظيم سير الحصة."
+   },
+   {
+    "id": "other",
+    "label": "تحقيق هدف تعليمي آخر."
+   }
+  ],
+  "other": "other"
+ },
+ {
+  "id": "reason",
+  "phase": 0,
+  "type": "single_text",
+  "q": "ما الذي دفعك إلى اختيار هذا التصرف؟",
+  "opts": [
+   {
+    "id": "experience",
+    "label": "تجربة سابقة."
+   },
+   {
+    "id": "judgment",
+    "label": "تقديري للموقف في تلك اللحظة."
+   },
+   {
+    "id": "time_pressure",
+    "label": "ضيق الوقت."
+   },
+   {
+    "id": "habit",
+    "label": "أسلوب اعتدت استخدامه."
+   },
+   {
+    "id": "procedure",
+    "label": "تعليمات أو إجراءات متبعة."
+   },
+   {
+    "id": "other",
+    "label": "سبب آخر."
+   }
+  ],
+  "other": "other",
+  "writeQ": "ما الذي جعلك ترين هذا التصرف مناسبًا؟"
+ },
+ {
+  "id": "result",
+  "phase": 1,
+  "type": "single",
+  "q": "ماذا كانت نتيجة تصرفك؟",
+  "opts": [
+   {
+    "id": "clear_improve",
+    "label": "تحسن الموقف بوضوح."
+   },
+   {
+    "id": "partial_improve",
+    "label": "تحسن الموقف جزئيًا."
+   },
+   {
+    "id": "no_change",
+    "label": "لم يتغير الموقف."
+   },
+   {
+    "id": "harder",
+    "label": "أصبح الموقف أكثر صعوبة."
+   },
+   {
+    "id": "unexpected",
+    "label": "ظهرت نتيجة غير متوقعة."
+   },
+   {
+    "id": "undetermined",
+    "label": "لم أتمكن من تحديد النتيجة."
+   }
+  ]
+ },
+ {
+  "id": "blindspots",
+  "phase": 1,
+  "type": "multi_text",
+  "q": "بعد مراجعة الموقف، ما الذي تعتقدين أنك ربما لم تنتبهي إليه؟",
+  "opts": [
+   {
+    "id": "other_explanation",
+    "label": "وجود تفسير آخر للموقف."
+   },
+   {
+    "id": "student_needs",
+    "label": "احتياجات بعض الطالبات أو الفروق الفردية."
+   },
+   {
+    "id": "feelings",
+    "label": "تأثير مشاعري في القرار."
+   },
+   {
+    "id": "prior_assumption",
+    "label": "اعتمادي على افتراض سابق."
+   },
+   {
+    "id": "insufficient_evidence",
+    "label": "عدم كفاية الأدلة للحكم على الموقف."
+   },
+   {
+    "id": "no_gap",
+    "label": "لا أرى جانبًا أغفلته حتى الآن."
+   }
+  ],
+  "exclusive": "no_gap",
+  "writeQ": "ما الذي جعلك تعيدين التفكير في هذا الجانب؟"
+ },
+ {
+  "id": "alternatives",
+  "phase": 2,
+  "type": "multi",
+  "q": "ما البدائل التدريسية التي كان بإمكانك استخدامها للتعامل مع الموقف؟",
+  "opts": [
+   {
+    "id": "change_method",
+    "label": "تغيير طريقة الشرح أو النشاط."
+   },
+   {
+    "id": "short_assessment",
+    "label": "استخدام تقويم فردي قصير."
+   },
+   {
+    "id": "dialogue_listen",
+    "label": "إتاحة فرصة للحوار والاستماع."
+   },
+   {
+    "id": "differentiated",
+    "label": "تقديم دعم متمايز للطالبات."
+   },
+   {
+    "id": "reorganize",
+    "label": "تعديل تنظيم النشاط أو إدارة الموقف."
+   },
+   {
+    "id": "consult",
+    "label": "طلب مساعدة أو استشارة."
+   },
+   {
+    "id": "other",
+    "label": "بديل آخر."
+   }
+  ],
+  "other": "other"
+ },
+ {
+  "id": "evidence",
+  "phase": 2,
+  "type": "multi",
+  "q": "ما المعلومات أو الأدلة التي تحتاجين إليها قبل اختيار التصرف الأنسب؟",
+  "opts": [
+   {
+    "id": "assessment_data",
+    "label": "نتائج تقويم أو أسئلة تشخيصية."
+   },
+   {
+    "id": "observation",
+    "label": "ملاحظة سلوك الطالبات واستجاباتهن."
+   },
+   {
+    "id": "student_view",
+    "label": "الاستماع إلى وجهة نظر الطالبات."
+   },
+   {
+    "id": "prior_performance",
+    "label": "مراجعة مستوى الأداء السابق."
+   },
+   {
+    "id": "conditions",
+    "label": "معرفة الظروف أو الاحتياجات المؤثرة في الموقف."
+   },
+   {
+    "id": "consult",
+    "label": "استشارة مختصة أو زميلة."
+   },
+   {
+    "id": "other",
+    "label": "معلومات أخرى."
+   }
+  ],
+  "other": "other"
+ },
+ {
+  "id": "step",
+  "phase": 3,
+  "type": "single_text",
+  "q": "ما الخطوة البسيطة التي يمكنك تجربتها في الحصة القادمة؟",
+  "opts": [
+   {
+    "id": "new_strategy",
+    "label": "تطبيق استراتيجية تدريس مختلفة."
+   },
+   {
+    "id": "short_assessment",
+    "label": "إضافة تقويم قصير أثناء الحصة."
+   },
+   {
+    "id": "dialogue_time",
+    "label": "تخصيص وقت للحوار مع الطالبات."
+   },
+   {
+    "id": "extra_support",
+    "label": "تقديم دعم إضافي لفئة محددة."
+   },
+   {
+    "id": "reorganize",
+    "label": "تعديل طريقة تنظيم النشاط."
+   },
+   {
+    "id": "other",
+    "label": "تجربة إجراء آخر."
+   }
+  ],
+  "other": "other",
+  "writeQ": "كيف ستطبقين هذه الخطوة؟"
+ },
+ {
+  "id": "measure",
+  "phase": 3,
+  "type": "multi",
+  "q": "كيف ستقيسين أثر خطوة التحسين بعد تطبيقها؟",
+  "opts": [
+   {
+    "id": "compare_assessment",
+    "label": "مقارنة نتائج تقويم قبل التطبيق وبعده."
+   },
+   {
+    "id": "student_performance",
+    "label": "ملاحظة تغير في أداء الطالبات."
+   },
+   {
+    "id": "goal_attainment",
+    "label": "قياس مدى تحقق هدف التعلم."
+   },
+   {
+    "id": "participation",
+    "label": "متابعة مستوى المشاركة والتفاعل."
+   },
+   {
+    "id": "student_feedback",
+    "label": "جمع تغذية راجعة من الطالبات."
+   },
+   {
+    "id": "behavior_recurrence",
+    "label": "متابعة تكرار السلوك أو المشكلة."
+   },
+   {
+    "id": "other",
+    "label": "طريقة قياس أخرى."
+   }
+  ],
+  "other": "other"
+ },
+ {
+  "id": "learning",
+  "phase": 3,
+  "type": "text",
+  "q": "ما أهم شيء تعلمتِه عن ممارستك التدريسية من هذا الموقف؟",
+  "short": true
+ },
+ {
+  "id": "reminder",
+  "phase": 3,
+  "type": "text",
+  "q": "ما التذكير الذي تودين الاحتفاظ به لنفسك عند مواجهة موقف مشابه؟",
+  "short": true
+ }
 ];
-const N = QUESTIONS.length;
-// Follow-up questions keyed by fixed option index (same order as QUESTIONS[i].opts).
-// null = no follow-up; string = one fixed follow-up; array = one follow-up per option.
-const FOLLOW = [
-  null,
-  null,
-  "لماذا كان هذا الهدف مهمًا بالنسبة لك في ذلك الموقف؟",
-  ["ما أوجه التشابه بين الموقف الحالي وتجربتك السابقة؟",
-   "ما الذي جعلك تعتقدين أنه الأنسب؟",
-   "كيف أثّر ضيق الوقت في قرارك؟",
-   "هل ترين أن هذا الأسلوب يناسب جميع المواقف؟ ولماذا؟",
-   "كيف ساعدتك هذه التعليمات في التعامل مع الموقف؟",
-   "كيف أثّر هذا السبب في قرارك؟"],
-  ["ما الذي لاحظتِه وجعلك تعتقدين أن الموقف تحسن؟",
-   "ما السبب الذي قد يفسر عدم تغير الموقف؟",
-   "ما الذي تعتقدين أنه ساهم في زيادة صعوبة الموقف؟",
-   "كيف اختلفت النتيجة عما كنتِ تتوقعينه؟",
-   "ما الذي يمكنك ملاحظته لاحقًا لتحديد أثر تصرفك؟"],
-  ["ما التفسير الآخر الذي يمكن أن يساعدك على فهم الموقف؟",
-   "كيف يمكن أن تكون مشاعرك قد أثرت في طريقة استجابتك؟",
-   "كيف يمكنك التحقق من صحة هذا الافتراض؟",
-   "كيف يمكنك التعرف على احتياجاتهن بصورة أفضل؟",
-   "ما الأدلة التي تجعلك واثقة من ذلك؟",
-   "ما المعلومات التي تحتاجين إليها لفهم الموقف بصورة أوضح؟"],
-  ["ما الذي يجعلك ترين أن تكرار التصرف هو الخيار الأنسب؟",
-   "ما التغيير الذي ترغبين في تجربته؟",
-   "كيف يمكن أن يساعدك الاستماع إليهن؟",
-   "ما الاستراتيجية التي ترغبين في تجربتها؟",
-   "ما الذي تتوقعين أن تضيفه لك الاستشارة؟",
-   "ما الخيار الذي ترغبين في استكشافه أولًا؟"],
-  "كيف يمكنك استخدام هذه الطريقة للتحقق من أثر قرارك؟",
-  "كيف ستطبقين هذه الخطوة في موقف تدريسي مشابه؟",
-  "ما الدليل المحدد الذي ستعتمدين عليه لمعرفة ما إذا حدث تحسن؟",
-  "ما الذي تعلمتِه عن ممارستك التدريسية من خلال هذا الموقف؟",
-  "اكتبي تذكيرًا قصيرًا لنفسك يساعدك في المواقف القادمة."
-];
-// Index of the "other" option, for questions that have one.
-const OTHER = { 0: 5, 1: 4, 2: 5, 3: 5, 7: 5, 8: 5, 9: 5, 11: 5 };
-function followFor(i, c) {
-  const f = FOLLOW[i];
-  if (c === null || c === undefined || !f) return null;
-  return Array.isArray(f) ? (f[c] || null) : f;
-}
-function followKey(i, c) {
-  const f = FOLLOW[i];
-  if (c === null || c === undefined || !f) return "";
-  return i + ":" + (Array.isArray(f) ? c : 0);
-}
-const KEY = "muhaqqiq-taammuli-v1";
 
+const N = QUESTIONS.length;
+const KEY = "muhaqqiq-taammuli-v2";   // answers saved by an earlier question set (v1) are not reused
+
+// Saved shape: { view, step, counted, answers: { [questionId]: { sel: [optionId], text, other } } }
 let state = { view: "home", step: 0, answers: {}, counted: false };
 let memoryOnly = false;
+const isChoice = (q) => q.type !== "text";
+const isMulti = (q) => q.type === "multi" || q.type === "multi_text";
+const hasWrite = (q) => q.type === "text" || q.type === "single_text" || q.type === "multi_text";
+function cleanAnswer(q, raw) {
+  const r = raw && typeof raw === "object" ? raw : {};
+  let sel = Array.isArray(r.sel) ? r.sel.filter((id, k, all) => q.opts && q.opts.some((o) => o.id === id) && all.indexOf(id) === k) : [];
+  if (!isChoice(q)) sel = [];
+  else if (!isMulti(q)) sel = sel.slice(0, 1);
+  else if (q.exclusive && sel.includes(q.exclusive) && sel.length > 1) sel = [q.exclusive];
+  return {
+    sel,
+    text: hasWrite(q) && typeof r.text === "string" ? r.text : "",
+    other: q.other && sel.includes(q.other) && typeof r.other === "string" ? r.other : ""
+  };
+}
 try {
   const raw = localStorage.getItem(KEY);
   if (raw) {
@@ -390,33 +660,39 @@ try {
     if (s && typeof s === "object") {
       state.view = ["home", "session", "done"].includes(s.view) ? s.view : "home";
       state.step = Math.min(Math.max(parseInt(s.step) || 0, 0), N - 1);
-      state.answers = s.answers && typeof s.answers === "object" ? s.answers : {};
-      // Sessions saved before the counter existed are not counted.
-      state.counted = s.counted === undefined ? Object.keys(state.answers).length > 0 : !!s.counted;
+      state.counted = !!s.counted;
+      const src = s.answers && typeof s.answers === "object" ? s.answers : {};
+      QUESTIONS.forEach((q) => { state.answers[q.id] = cleanAnswer(q, src[q.id]); });
     }
   }
 } catch (e) { memoryOnly = true; }
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); memoryOnly = false; } catch (e) { memoryOnly = true; }
 }
-// Drop any saved follow-up text that does not belong to the current follow-up question.
-for (let i = 0; i < N; i++) {
-  const a = state.answers[i];
-  if (!a || typeof a !== "object") { delete state.answers[i]; continue; }
-  a.text = typeof a.text === "string" ? a.text : "";
-  a.choice = Number.isInteger(a.choice) && a.choice >= 0 && a.choice < QUESTIONS[i].opts.length ? a.choice : null;
-  const fk = followKey(i, a.choice);
-  if (a.fk !== fk) { a.follow = ""; a.fk = fk; }
-  a.follow = typeof a.follow === "string" ? a.follow : "";
-  a.other = a.choice !== null && a.choice === OTHER[i] && typeof a.other === "string" ? a.other : "";
-}
-let helpOpen = {};
-let changing = {};
 
 const $ = (s) => document.querySelector(s);
 const view = $("#view");
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const ans = (i) => state.answers[i] || (state.answers[i] = { text: "", choice: null, follow: "", fk: "", other: "" });
+const ans = (q) => state.answers[q.id] || (state.answers[q.id] = cleanAnswer(q, null));
+const selOf = (qid) => (state.answers[qid] && state.answers[qid].sel) || [];
+const has = (qid, oid) => selOf(qid).includes(oid);
+const hasAny = (qid, ...oids) => oids.some((o) => has(qid, o));
+const qById = (id) => QUESTIONS.find((q) => q.id === id);
+
+// A question is complete by its answer type. The "other" detail box is optional.
+function qDone(q) {
+  const a = state.answers[q.id] || {};
+  const n = (a.sel || []).length, t = (a.text || "").trim();
+  switch (q.type) {
+    case "text": return !!t;
+    case "single": return n === 1;
+    case "multi": return n >= 1;
+    case "single_text": return n === 1 && !!t;
+    case "multi_text": return n >= 1 && !!t;
+  }
+  return false;
+}
+function firstMissing() { const i = QUESTIONS.findIndex((q) => !qDone(q)); return i < 0 ? undefined : i; }
 
 // ---------- Feedback link and usage counter ----------
 const FORM_URL = "https://forms.gle/if3XBZ3w3FGXa3ZM7";
@@ -481,7 +757,7 @@ function render() {
 }
 
 function renderHome() {
-  const started = Object.values(state.answers).some((a) => a && (a.text || a.follow || a.choice !== null));
+  const started = Object.values(state.answers).some((a) => a && ((a.text || "").trim() || (a.sel || []).length));
   view.innerHTML = `
     <section class="home">
       <h2>كل موقف تدريسي يحمل فرصة للتعلّم</h2>
@@ -494,86 +770,61 @@ function renderHome() {
 }
 
 function renderQuestion() {
-  const i = state.step, d = QUESTIONS[i], a = ans(i);
-  const phaseName = PHASES[Math.floor(i / 2)];
-  const open = !!helpOpen[i] || a.choice !== null;
+  const i = state.step, q = QUESTIONS[i], a = ans(q);
   const last = i === N - 1;
+  const multi = isMulti(q);
+  const optsHtml = isChoice(q) ? `
+    <div class="opts" role="${multi ? "group" : "radiogroup"}" aria-labelledby="qtext">
+      ${q.opts.map((o) => `<button class="opt ${multi ? "multi" : "single"}" type="button" role="${multi ? "checkbox" : "radio"}" data-id="${o.id}" aria-checked="${a.sel.includes(o.id)}"><span class="mk" aria-hidden="true"></span><span>${esc(o.label)}</span></button>`).join("")}
+    </div>
+    ${q.other ? `<div class="follow" id="otherBox" hidden>
+      <label class="lbl" for="other">اكتبي التفاصيل</label>
+      <textarea id="other" class="sm" placeholder="اكتبي إجابتك هنا"></textarea>
+    </div>` : ""}` : "";
+  const writeHtml = hasWrite(q) ? (q.type === "text"
+    ? `<label class="lbl" for="ans">إجابتك</label>
+       <textarea id="ans" class="${q.short ? "sm" : ""}" placeholder="اكتبي إجابتك هنا"></textarea>`
+    : `<div class="follow">
+         <label class="lbl" for="ans">${esc(q.writeQ)}</label>
+         <textarea id="ans" class="sm" placeholder="اكتبي إجابتك هنا"></textarea>
+       </div>`) : "";
   view.innerHTML = `
     <div class="prog" role="group" aria-label="مؤشر التقدم">
       <div class="prog-row"><span>السؤال ${i + 1} من ${N}</span></div>
       <div class="bar" role="progressbar" aria-valuemin="1" aria-valuemax="${N}" aria-valuenow="${i + 1}"><i style="width:${((i + 1) / N) * 100}%"></i></div>
     </div>
-    <p class="phase">${esc(phaseName)}</p>
-    <h2 class="q">${esc(d.q)}</h2>
-    ${d.hint ? `<p class="hint"><b>توضيح:</b> ${esc(d.hint)}</p>` : ""}
-    <label class="lbl" for="ans">إجابتك</label>
-    <textarea id="ans" placeholder="اكتبي إجابتك هنا"></textarea>
-    <div class="help-wrap">
-      <button class="btn btn-ghost" type="button" id="helpBtn" aria-expanded="${open}" aria-controls="opts">ساعديني على التفكير</button>
-      <div class="opts" id="opts" ${open ? "" : "hidden"}></div>
-    </div>
-    <p class="saved" id="nudge" hidden>اكتبي تفسيرك الشخصي في مساحة الإجابة.</p>
-    <div class="follow" id="otherBox" hidden>
-      <label class="lbl" for="other">اكتبي التفاصيل</label>
-      <textarea id="other" class="sm" placeholder="اكتبي إجابتك هنا"></textarea>
-    </div>
-    <div class="follow" id="followBox" hidden>
-      <label class="lbl" for="follow" id="followLbl"></label>
-      <textarea id="follow" placeholder="اكتبي إجابتك هنا"></textarea>
-    </div>
+    <p class="phase">${esc(PHASES[q.phase])}</p>
+    <h2 class="q" id="qtext">${esc(q.q)}</h2>
+    ${q.hint ? `<p class="hint"><b>توجيه:</b> ${esc(q.hint)}</p>` : ""}
+    ${optsHtml}
+    ${writeHtml}
     <div class="nav-row">
       <button class="btn btn-ghost" type="button" id="prevBtn" ${i === 0 ? "disabled" : ""}>السابق</button>
       <button class="btn btn-primary" type="button" id="nextBtn">${last ? "إنهاء الجلسة" : "التالي"}</button>
     </div>
     <p class="saved">${memoryOnly ? "تعذر الحفظ في هذا المتصفح. ستبقى الإجابات حتى تغلقين الصفحة." : "تُحفظ إجاباتك تلقائيًا على هذا الجهاز."}</p>`;
 
-  const ta = $("#ans"), fo = $("#follow"), ot = $("#other");
-  ta.value = a.text; fo.value = a.follow; ot.value = a.other;
-  ta.oninput = () => { a.text = ta.value; save(); syncBranch(); updateEvalNav(); };
-  fo.oninput = () => { a.follow = fo.value; save(); };
-  ot.oninput = () => { a.other = ot.value; save(); };
+  const ta = $("#ans"), ot = $("#other");
+  if (ta) { ta.value = a.text; ta.oninput = () => { a.text = ta.value; save(); updateEvalNav(); }; }
+  if (ot) { ot.value = a.other; ot.oninput = () => { a.other = ot.value; save(); }; }
 
-  // Show the follow-up (if any) and the "other" details box for the current choice only.
-  function syncBranch() {
-    const f = followFor(i, a.choice);
-    $("#followBox").hidden = !f;
-    $("#followLbl").textContent = f || "";
-    $("#otherBox").hidden = !(a.choice !== null && a.choice === OTHER[i]);
-    $("#nudge").hidden = !(a.choice !== null && !a.text.trim());
+  function syncChoices() {
+    view.querySelectorAll(".opt").forEach((b) => b.setAttribute("aria-checked", String(a.sel.includes(b.dataset.id))));
+    const ob = $("#otherBox");
+    if (ob) ob.hidden = !(q.other && a.sel.includes(q.other));
   }
-  syncBranch();
-
-  $("#helpBtn").onclick = () => {
-    if (a.choice !== null) return; // options stay visible while a choice is selected
-    helpOpen[i] = !helpOpen[i];
-    $("#opts").hidden = !helpOpen[i];
-    $("#helpBtn").setAttribute("aria-expanded", String(!!helpOpen[i]));
-  };
-  // Options: all shown while choosing; once chosen, only the selected one plus a "change" link.
-  function renderOpts() {
-    const box = $("#opts");
-    const collapsed = a.choice !== null && !changing[i];
-    const list = collapsed ? [a.choice] : d.opts.map((_, k) => k);
-    box.innerHTML = list.map((k) => `<button class="opt" type="button" data-k="${k}" aria-pressed="${a.choice === k}">${esc(d.opts[k])}</button>`).join("")
-      + (collapsed ? `<button class="link-btn" type="button" id="changeBtn">تغيير الاختيار</button>` : "");
-    box.querySelectorAll(".opt").forEach((b) => {
-      b.onclick = () => {
-        const k = +b.dataset.k;
-        if (collapsed) return;
-        a.choice = k;
-        helpOpen[i] = true; changing[i] = false;
-        // A different follow-up question must not inherit the previous answer.
-        const fk = followKey(i, a.choice);
-        if (a.fk !== fk) { a.follow = ""; fo.value = ""; a.fk = fk; }
-        if (a.choice !== OTHER[i]) { a.other = ""; ot.value = ""; }
-        save();
-        renderOpts(); syncBranch();
-      };
-    });
-    const cb = $("#changeBtn");
-    if (cb) cb.onclick = () => { changing[i] = true; renderOpts(); };
-  }
-  renderOpts();
+  syncChoices();
+  view.querySelectorAll(".opt").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.id, on = a.sel.includes(id);
+      if (!multi) a.sel = [id];                                   // single choice: picking another replaces it
+      else if (on) a.sel = a.sel.filter((x) => x !== id);         // multiple: toggle
+      else if (id === q.exclusive) a.sel = [id];                  // "nothing missed" excludes the others
+      else a.sel = a.sel.filter((x) => x !== q.exclusive).concat(id);
+      if (!(q.other && a.sel.includes(q.other))) { a.other = ""; if (ot) ot.value = ""; }
+      save(); syncChoices(); updateEvalNav();
+    };
+  });
   $("#prevBtn").onclick = () => step(-1);
   $("#nextBtn").onclick = () => step(1);
 }
@@ -585,65 +836,60 @@ function step(dir) {
   save(); render(); window.scrollTo(0, 0);
 }
 
-// ---------- Report ----------
+// ---------- Analysis engine ----------
+// Rules read structured choices only (never the free text). RULES is in priority order.
+// Rules sharing a group are alternatives: only the first matching one is shown, so similar notes never repeat.
+// At most three notes are shown. Texts are suggestions for reflection, not judgments.
 const RULES = [
-  { id: "A", on: () => choiceOf(5) === 2,
+  { id: "A", group: "assumptions", on: () => has("blindspots", "prior_assumption"),
     text: "قد تؤثر الخبرات السابقة في تفسير المواقف الجديدة. من المفيد التحقق من ظروف الموقف الحالي قبل الاعتماد على تفسير سابق." },
-  { id: "B", on: () => choiceOf(5) === 0 || choiceOf(5) === 3,
+  { id: "X3", group: "students", on: () => has("goal", "behavior") && hasAny("blindspots", "student_needs", "other_explanation"),
+    text: "قد يرتبط السلوك الصفي باحتياج أو سبب لا يظهر مباشرة. يمكن أن يوسّع فهم السبب قبل التعامل مع السلوك خيارات الاستجابة." },
+  { id: "B", group: "students", on: () => hasAny("blindspots", "other_explanation", "student_needs"),
     text: "قد تتأثر استجابات الطالبات بعوامل لا تظهر مباشرة أثناء الحصة. يساعد الاستماع إلى وجهات نظرهن على تكوين صورة أكثر اكتمالًا للموقف." },
-  { id: "C", on: () => choiceOf(5) === 1,
+  { id: "C", group: "emotions", on: () => has("blindspots", "feelings"),
     text: "قد تؤثر الانفعالات اللحظية في طريقة الاستجابة للمواقف الصفية. يساعد التمهل، متى كان ممكنًا، على مراجعة البدائل قبل اتخاذ القرار." },
-  { id: "D", on: () => choiceOf(4) === 4,
+  { id: "D", group: "evidence", on: () => has("result", "undetermined") || has("blindspots", "insufficient_evidence"),
     text: "قد يصعب الحكم على فاعلية القرار دون أدلة واضحة. يمكن تحديد مؤشر بسيط وملاحظته في المواقف القادمة قبل استخلاص النتيجة." },
-  { id: "E", on: () => choiceOf(4) === 1 || choiceOf(4) === 2,
+  { id: "X5", group: "result", on: () => hasAny("result", "no_change", "harder") && has("blindspots", "no_gap"),
+    text: "عندما لا تتحقق النتيجة المتوقعة مع عدم ظهور جانب أغفلتِه، قد يفيد تحديد الأدلة التي تدعم هذا التقدير، ثم تجربة بديل مع متابعة أثره." },
+  { id: "E", group: "result", on: () => hasAny("result", "no_change", "harder"),
     text: "عدم تحقق النتيجة المتوقعة فرصة لمراجعة الإجراء والظروف المحيطة به، وتجربة بديل مناسب مع متابعة أثره." },
-  { id: "F", on: () => choiceOf(4) === 0,
+  { id: "F", group: "result", on: () => hasAny("result", "clear_improve", "partial_improve"),
     text: "من المفيد تحديد الأدلة التي تشير إلى التحسن، والتحقق مما إذا كان مرتبطًا بالإجراء المتخذ أو بعوامل أخرى." },
-  { id: "G", on: () => choiceOf(6) === 0,
-    text: "قد يكون تكرار الإجراء مناسبًا إذا دعمت الأدلة فاعليته. ويمكن أيضًا التفكير في الظروف التي قد تستدعي استجابة مختلفة." },
-  { id: "H", on: () => choiceOf(6) === 5,
-    text: "ليس من الضروري الوصول إلى حل فوري. يمكن البدء بتجربة تغيير صغير أو الاستفادة من خبرة زميلة، ثم مراجعة النتائج." }
-]; // array order = priority order
+  { id: "X1", group: "time", on: () => has("reason", "time_pressure"),
+    text: "قد يحدّ ضيق الوقت من النظر في البدائل. يمكن تحديد بديل أو اثنين مسبقًا للمواقف المشابهة لتسهيل الاختيار السريع." },
+  { id: "X2", group: "method", on: () => hasAny("reason", "experience", "habit") && !hasAny("result", "clear_improve"),
+    text: "قد تكون التجربة السابقة أو الأسلوب المعتاد مناسبًا، وحين لا يتضح أثره بجلاء يفيد اختباره مقارنةً ببديل آخر مع متابعة النتيجة." }
+];
 const NO_RULE = "يمكنك العودة إلى إجاباتك والتفكير في الأدلة التي تدعم قراراتك، والبدائل الممكنة في المواقف المشابهة.";
-const choiceOf = (i) => { const a = state.answers[i]; return a && Number.isInteger(a.choice) ? a.choice : null; };
-
-// Pieces of one answer. Follow-up text counts only if it belongs to the current follow-up question.
-function parts(i) {
-  const a = state.answers[i] || {};
-  const c = choiceOf(i);
-  const fq = followFor(i, c);
-  const fOk = fq && a.fk === followKey(i, c) && (a.follow || "").trim();
-  return {
-    chip: c !== null ? QUESTIONS[i].opts[c] : "",
-    text: (a.text || "").trim(),
-    other: c !== null && c === OTHER[i] ? (a.other || "").trim() : "",
-    fq: fOk ? fq : "",
-    follow: fOk ? a.follow.trim() : ""
-  };
+function analyze() {
+  const groups = new Set(), out = [];
+  for (const r of RULES) {
+    if (out.length >= 3) break;
+    if (groups.has(r.group) || !r.on()) continue;
+    groups.add(r.group); out.push(r);
+  }
+  return out;
 }
-const para = (t) => `<p class="ans">${esc(t)}</p>`;
+
+// ---------- Report ----------
+// mode: all | choices | text. quiet: return "" instead of the empty notice.
 const NONE = `<p class="none">لم تُسجّل إجابة</p>`;
-// mode: all | main | follow. quiet: return "" instead of the empty notice.
-function entry(i, mode = "all", quiet = false) {
-  const p = parts(i);
+const para = (t) => `<p class="ans">${esc(t)}</p>`;
+function entry(qid, mode = "all", quiet = false) {
+  const q = qById(qid), a = state.answers[qid] || { sel: [], text: "", other: "" };
   let h = "";
-  if (mode !== "follow") {
-    if (p.chip) h += `<span class="chip">${esc(p.chip)}</span>`;
-    if (p.text) h += para(p.text);
-    if (p.other) h += para(p.other);
+  if (mode !== "text" && isChoice(q)) {
+    const chosen = q.opts.filter((o) => a.sel.includes(o.id));
+    if (chosen.length) h += `<div class="chips">${chosen.map((o) => `<span class="chip">${esc(o.label)}</span>`).join("")}</div>`;
+    if (a.other && a.other.trim()) h += para(a.other.trim());
   }
-  if (mode !== "main" && p.follow) {
-    h += mode === "follow" ? para(p.follow) : `<p class="fq">${esc(p.fq)}</p>${para(p.follow)}`;
-  }
+  if (mode !== "choices" && hasWrite(q) && (a.text || "").trim()) h += para(a.text.trim());
   return h || (quiet ? "" : NONE);
 }
 const item = (cap, html) => `<div class="item"><h4>${esc(cap)}</h4>${html}</div>`;
 const group = (title, items) => `<div class="group"><h3>${esc(title)}</h3>${items.join("")}</div>`;
-
-// Questions (0-based) that need a real written answer before the report can be shown.
-const REQUIRED = [0, 1, 3, 4, 5, 8, 9, 10];
-const hasText = (i) => !!(state.answers[i] && typeof state.answers[i].text === "string" && state.answers[i].text.trim());
-const firstMissing = () => REQUIRED.find((i) => !hasText(i));
 
 function renderDone() {
   const miss = firstMissing();
@@ -656,25 +902,21 @@ function renderDone() {
     $("#contBtn").onclick = () => { state.view = "session"; state.step = miss; save(); render(); window.scrollTo(0, 0); };
     return;
   }
-  const notes = RULES.filter((r) => r.on()).slice(0, 3);
-  const p9 = parts(8);
-  const hasAction = !!p9.text;
-  const q7 = entry(6, "all", true);
-  const q10main = entry(9, "main", true);
+  const notes = analyze();
+  const hasAction = selOf("step").length > 0;
 
   const personal =
-    group("الموقف التدريسي", [item("وصف الموقف", entry(0)), item("تصرفي", entry(1))]) +
-    group("فهم قراري", [item("الهدف من التصرف", entry(2)), item("أسباب اتخاذ القرار", entry(3))]) +
-    group("مراجعة ما حدث", [item("نتيجة التصرف", entry(4)), item("ما أعدت التفكير فيه", entry(5))]) +
-    group("ما تعلمته", [item("اكتشافي", entry(10)), item("تذكيري لنفسي", entry(11, "follow"))]);
+    group("الموقف التدريسي", [item("وصف الموقف", entry("situation")), item("تصرفي", entry("action"))]) +
+    group("فهم قراري", [item("الهدف من التصرف", entry("goal")), item("أسباب اتخاذ القرار", entry("reason"))]) +
+    group("مراجعة ما حدث", [item("نتيجة التصرف", entry("result")), item("ما أعدت التفكير فيه", entry("blindspots"))]) +
+    group("البدائل والأدلة", [item("البدائل التي كان بإمكاني استخدامها", entry("alternatives")), item("المعلومات والأدلة التي أحتاج إليها", entry("evidence"))]) +
+    group("ما تعلمته", [item("اكتشافي", entry("learning")), item("تذكيري لنفسي", entry("reminder"))]);
 
   const plan = [
-    item("ما الذي سأفعله؟", (hasAction ? entry(8, "main")
-      : `<p class="none">لم يتم تحديد إجراء بعد</p><button class="link-btn no-print" type="button" data-goto="8">تعديل إجابة السؤال 9</button>`)
-      + (q7 ? `<p class="sub">عند مواجهة موقف مشابه</p>${q7}` : "")),
-    item("كيف سأطبقه؟", entry(8, "follow")),
-    item("كيف سأتحقق من أثره؟", entry(7) + (q10main ? `<p class="sub">مؤشر المتابعة</p>${q10main}` : "")),
-    item("ما الدليل الذي سأبحث عنه؟", entry(9, "follow"))
+    item("ما الذي سأفعله؟", hasAction ? entry("step", "choices")
+      : `<p class="none">لم يتم تحديد إجراء بعد</p><button class="link-btn no-print" type="button" data-goto="${QUESTIONS.findIndex((q) => q.id === "step")}">تعديل إجابة السؤال 9</button>`),
+    item("كيف سأطبقه؟", entry("step", "text")),
+    item("كيف سأتحقق من أثره؟", entry("measure"))
   ].join("");
 
   view.innerHTML = `
@@ -703,7 +945,11 @@ function renderDone() {
     $("#confirmBox").innerHTML = `<div class="confirm"><p>سيتم حذف كل إجاباتك المحفوظة والتقرير الحالي. هل تريدين المتابعة؟</p>
       <div class="row"><button class="btn btn-primary" type="button" id="yesReset">نعم، ابدئي تأملًا جديدًا</button>
       <button class="btn btn-ghost" type="button" id="noReset">إلغاء</button></div></div>`;
-    $("#yesReset").onclick = () => { state = { view: "session", step: 0, answers: {}, counted: false }; helpOpen = {}; changing = {}; save(); render(); window.scrollTo(0, 0); countStart(); };
+    $("#yesReset").onclick = () => {
+      state = { view: "session", step: 0, answers: {}, counted: false };
+      QUESTIONS.forEach((q) => ans(q));
+      save(); render(); window.scrollTo(0, 0); countStart();
+    };
     $("#noReset").onclick = () => { $("#confirmBox").innerHTML = ""; };
   };
 }

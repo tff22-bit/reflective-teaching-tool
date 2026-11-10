@@ -24,7 +24,10 @@ const srv = http.createServer((q,r)=>{ r.setHeader('content-type','text/html; ch
  await pg.click('#nextBtn'); await pg.click('#nextBtn'); await pg.click('[data-go="home"]'); await pg.click('#startBtn'); await pg.waitForTimeout(300);
  console.log('posts after reload/nav/home-again',log.posts);
  // complete all required, check eval link
- await pg.evaluate(()=>{const K="muhaqqiq-taammuli-v1";const s=JSON.parse(localStorage.getItem(K));[0,1,3,4,5,8,9,10].forEach(i=>s.answers[i]={text:"نص",choice:null,follow:"",fk:"",other:""});localStorage.setItem(K,JSON.stringify(s));});
+ await pg.evaluate(()=>{const K="muhaqqiq-taammuli-v2";localStorage.setItem(K,JSON.stringify({view:"home",step:0,counted:true,answers:{
+  situation:{text:"a"},action:{sel:["direct"],text:"a"},goal:{sel:["understanding"]},reason:{sel:["judgment"],text:"a"},result:{sel:["clear_improve"]},
+  blindspots:{sel:["no_gap"],text:"a"},alternatives:{sel:["consult"]},evidence:{sel:["observation"]},step:{sel:["new_strategy"],text:"a"},
+  measure:{sel:["participation"]},learning:{text:"a"},reminder:{text:"a"}}}));});
  await pg.reload(); await pg.waitForTimeout(200);
  const a=pg.locator('#evalLi a'); console.log('eval link:',await a.getAttribute('href'),await a.getAttribute('target'));
  // new session from report
