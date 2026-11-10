@@ -22,25 +22,6 @@ for (const l of L) {
 const KIND = { 'كتابة فقط.': 'text', 'كتابة قصيرة فقط.': 'text', 'اختيار واحد + كتابة قصيرة.': 'single_text', 'اختيار واحد فقط.': 'single', 'اختيار متعدد + كتابة قصيرة.': 'multi_text', 'اختيار متعدد فقط.': 'multi' };
 const IDS = ['situation', 'action', 'goal', 'reason', 'result', 'blindspots', 'alternatives', 'evidence', 'step', 'measure', 'learning', 'reminder'];
 
-// ---- independent expectation for the analysis engine (priority order, groups, cap of 3)
-function expected(s) {
-  const h = (q, o) => (s[q] || []).includes(o), any = (q, ...o) => o.some((x) => h(q, x));
-  const list = [
-    ['A', 'assumptions', h('blindspots', 'prior_assumption')],
-    ['X3', 'students', h('goal', 'behavior') && any('blindspots', 'student_needs', 'other_explanation')],
-    ['B', 'students', any('blindspots', 'other_explanation', 'student_needs')],
-    ['C', 'emotions', h('blindspots', 'feelings')],
-    ['D', 'evidence', h('result', 'undetermined') || h('blindspots', 'insufficient_evidence')],
-    ['X5', 'result', any('result', 'no_change', 'harder') && h('blindspots', 'no_gap')],
-    ['E', 'result', any('result', 'no_change', 'harder')],
-    ['F', 'result', any('result', 'clear_improve', 'partial_improve')],
-    ['X1', 'time', h('reason', 'time_pressure')],
-    ['X2', 'method', any('reason', 'experience', 'habit') && !any('result', 'clear_improve')]];
-  const g = new Set(), out = [];
-  for (const [id, grp, on] of list) { if (out.length >= 3) break; if (!on || g.has(grp)) continue; g.add(grp); out.push(id); }
-  return out;
-}
-
 (async () => {
   ok(Q.length === 12 && phases.length === 4, 'fixture parsed');
   const b = await chromium.launch(); const pg = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
@@ -126,26 +107,6 @@ function expected(s) {
   ok(!/مؤشر المتابعة|عند مواجهة موقف مشابه|ما الدليل الذي سأبحث عنه/.test(rep), 'no old report fields');
   ok(rep.includes('ما الذي سأفعله؟') && rep.includes('كيف سأطبقه؟') && rep.includes('كيف سأتحقق من أثره؟'), 'plan rows present');
   ok(await pg.locator('#evalLi a').count() === 1, 'feedback link when complete');
-
-  // ---- analysis engine: all valid combinations, compared with the independent expectation
-  const subsets = []; const bs = ['other_explanation', 'student_needs', 'feelings', 'prior_assumption', 'insufficient_evidence'];
-  for (let m = 0; m < 32; m++) subsets.push(bs.filter((_, k) => m >> k & 1)); subsets.push(['no_gap']);
-  const results = ['clear_improve', 'partial_improve', 'no_change', 'harder', 'unexpected', 'undetermined'];
-  const reasons = ['experience', 'judgment', 'time_pressure', 'habit', 'procedure', 'other'];
-  const goals = ['behavior', 'understanding'];
-  const cases = []; for (const r of results) for (const b2 of subsets) for (const rs of reasons) for (const g of goals) cases.push({ result: [r], blindspots: b2, reason: [rs], goal: [g] });
-  await load(full());
-  const got = await pg.evaluate((cases) => cases.map((c) => { for (const k in c) state.answers[k].sel = c[k]; return analyze().map((r) => r.id); }), cases);
-  let bad = 0; cases.forEach((c, k) => { if (JSON.stringify(got[k]) !== JSON.stringify(expected(c))) { bad++; if (bad < 4) fail.push('engine mismatch ' + JSON.stringify(c) + ' got ' + got[k] + ' want ' + expected(c)); } });
-  ok(bad === 0, 'engine matches expectation on ' + cases.length + ' combinations');
-  ok(got.every((g) => g.length <= 3), 'never more than 3 notes');
-  // changing a choice updates the notes shown
-  await load(full()); const before = await pg.locator('.notes li').allInnerTexts();
-  await pg.evaluate(() => { state.answers.blindspots.sel = ['prior_assumption']; state.answers.result.sel = ['no_change']; render(); });
-  const after = await pg.locator('.notes li').allInnerTexts();
-  ok(after.length === 2 && after[0].startsWith('قد تؤثر الخبرات') && after[1].startsWith('عدم تحقق'), 'notes follow changed choices'); ok(JSON.stringify(before) !== JSON.stringify(after), 'notes changed');
-  await pg.evaluate(() => { state.answers.blindspots.sel = ['no_gap']; state.answers.result.sel = ['unexpected']; state.answers.reason.sel = ['judgment']; render(); });
-  ok((await pg.innerText('.notes')).startsWith('يمكنك العودة'), 'fallback when no rule applies');
 
   ok(errs.length === 0, 'no page errors: ' + errs.join('|'));
   console.log('PASS', pass, 'FAIL', fail.length); fail.forEach((f) => console.log(' -', f));

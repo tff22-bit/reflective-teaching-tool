@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node build.mjs",
     "test": "node test/function.test.mjs",
-    "test:ui": "node test/ui.test.cjs && node test/session.test.cjs"
+    "test:ui": "node test/ui.test.cjs && node test/session.test.cjs && node test/engine.test.cjs"
   },
   "dependencies": {
     "@netlify/database": "^2.0.3"

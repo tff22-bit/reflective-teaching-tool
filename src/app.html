@@ -828,41 +828,83 @@ function step(dir) {
   save(); render(); window.scrollTo(0, 0);
 }
 
-// ---------- Analysis engine ----------
-// Rules read structured choices only (never the free text). RULES is in priority order.
-// Rules sharing a group are alternatives: only the first matching one is shown, so similar notes never repeat.
-// At most three notes are shown. Texts are suggestions for reflection, not judgments.
-const RULES = [
-  { id: "A", group: "assumptions", on: () => has("blindspots", "prior_assumption"),
-    text: "قد تؤثر الخبرات السابقة في تفسير المواقف الجديدة. من المفيد التحقق من ظروف الموقف الحالي قبل الاعتماد على تفسير سابق." },
-  { id: "X3", group: "students", on: () => has("goal", "behavior") && hasAny("blindspots", "student_needs", "other_explanation"),
-    text: "قد يرتبط السلوك الصفي باحتياج أو سبب لا يظهر مباشرة. يمكن أن يوسّع فهم السبب قبل التعامل مع السلوك خيارات الاستجابة." },
-  { id: "B", group: "students", on: () => hasAny("blindspots", "other_explanation", "student_needs"),
-    text: "قد تتأثر استجابات الطالبات بعوامل لا تظهر مباشرة أثناء الحصة. يساعد الاستماع إلى وجهات نظرهن على تكوين صورة أكثر اكتمالًا للموقف." },
-  { id: "C", group: "emotions", on: () => has("blindspots", "feelings"),
-    text: "قد تؤثر الانفعالات اللحظية في طريقة الاستجابة للمواقف الصفية. يساعد التمهل، متى كان ممكنًا، على مراجعة البدائل قبل اتخاذ القرار." },
-  { id: "D", group: "evidence", on: () => has("result", "undetermined") || has("blindspots", "insufficient_evidence"),
-    text: "قد يصعب الحكم على فاعلية القرار دون أدلة واضحة. يمكن تحديد مؤشر بسيط وملاحظته في المواقف القادمة قبل استخلاص النتيجة." },
-  { id: "X5", group: "result", on: () => hasAny("result", "no_change", "harder") && has("blindspots", "no_gap"),
-    text: "عندما لا تتحقق النتيجة المتوقعة مع عدم ظهور جانب أغفلتِه، قد يفيد تحديد الأدلة التي تدعم هذا التقدير، ثم تجربة بديل مع متابعة أثره." },
-  { id: "E", group: "result", on: () => hasAny("result", "no_change", "harder"),
-    text: "عدم تحقق النتيجة المتوقعة فرصة لمراجعة الإجراء والظروف المحيطة به، وتجربة بديل مناسب مع متابعة أثره." },
-  { id: "F", group: "result", on: () => hasAny("result", "clear_improve", "partial_improve"),
-    text: "من المفيد تحديد الأدلة التي تشير إلى التحسن، والتحقق مما إذا كان مرتبطًا بالإجراء المتخذ أو بعوامل أخرى." },
-  { id: "X1", group: "time", on: () => has("reason", "time_pressure"),
-    text: "قد يحدّ ضيق الوقت من النظر في البدائل. يمكن تحديد بديل أو اثنين مسبقًا للمواقف المشابهة لتسهيل الاختيار السريع." },
-  { id: "X2", group: "method", on: () => hasAny("reason", "experience", "habit") && !hasAny("result", "clear_improve"),
-    text: "قد تكون التجربة السابقة أو الأسلوب المعتاد مناسبًا، وحين لا يتضح أثره بجلاء يفيد اختباره مقارنةً ببديل آخر مع متابعة النتيجة." }
+// ---------- Analysis engine (three independent levels) ----------
+// Rules read structured choices only, by option id, never the free text. Texts are suggestions for reflection.
+// Each level checks its rules in priority order and uses the first one that matches (or the level's fallback text).
+// A level never affects another level, so a rule in one level cannot hide the insight of another.
+// Conditions: { q, pick:[optionIds] } = the question includes any of these; { all:[...] } = every part; { any:[...] } = at least one part.
+const INSIGHT_LEVELS = [
+ {
+  id: "decision", title: "قراءة القرار التدريسي",
+  fallback: "يمكنك مراجعة العلاقة بين هدفك من التصرف والنتيجة التي لاحظتِها، وتحديد ما قد يساعدك على فهم هذه العلاقة بصورة أدق.",
+  rules: [
+   { id: "D1", when: {"q": "blindspots", "pick": ["feelings"]},
+     text: "قد تؤثر الانفعالات اللحظية في الاستجابة للمواقف الصفية. يساعد التمهل، متى كان ممكنًا، على مراجعة البدائل قبل اتخاذ القرار." },
+   { id: "D2", when: {"all": [{"q": "goal", "pick": ["behavior"]}, {"q": "blindspots", "pick": ["other_explanation", "student_needs"]}]},
+     text: "قد يرتبط السلوك الصفي بعوامل لا تظهر مباشرة. يساعد استكشاف احتياجات الطالبات وظروف الموقف على توسيع خيارات الاستجابة." },
+   { id: "D3", when: {"q": "blindspots", "pick": ["prior_assumption"]},
+     text: "قد تؤثر الخبرات السابقة في تفسير المواقف الجديدة. من المفيد التحقق من ظروف الموقف الحالي قبل الاعتماد على تفسير سابق." },
+   { id: "D4", when: {"any": [{"q": "result", "pick": ["undetermined"]}, {"q": "blindspots", "pick": ["insufficient_evidence"]}]},
+     text: "يصعب الحكم على أثر القرار دون مؤشرات واضحة. قد يساعد تحديد دليل قابل للملاحظة على تكوين حكم أكثر استنادًا إلى الأدلة." },
+   { id: "D5", when: {"q": "result", "pick": ["no_change", "harder"]},
+     text: "عدم تحقق النتيجة المرجوة فرصة لمراجعة الإجراء والظروف المحيطة به، وتجربة بديل مع متابعة أثره." },
+   { id: "D6", when: {"q": "reason", "pick": ["time_pressure"]},
+     text: "قد يحد ضيق الوقت من النظر في البدائل. يساعد الاستعداد المسبق باستجابات ممكنة على اتخاذ قرار أسرع وأكثر ملاءمة." },
+   { id: "D7", when: {"q": "result", "pick": ["clear_improve", "partial_improve"]},
+     text: "من المفيد تحديد الأدلة التي تشير إلى التحسن، والتحقق مما إذا كان مرتبطًا بالإجراء المتخذ أو بعوامل أخرى." },
+   { id: "D8", when: {"q": "reason", "pick": ["experience", "habit"]},
+     text: "قد يكون الأسلوب المألوف مناسبًا، لكن مراجعته في ضوء نتائج الموقف تساعد على معرفة متى يستحسن الاستمرار فيه أو تعديله." },
+  ]
+ },
+ {
+  id: "alternatives", title: "البدائل والأدلة",
+  fallback: "اختاري من الأدلة التي حددتِها ما يساعدك على المفاضلة بين البدائل، وفكري في كيفية استخدامه قبل تجربة أحدها.",
+  rules: [
+   { id: "A1", when: {"all": [{"q": "alternatives", "pick": ["short_assessment"]}, {"q": "evidence", "pick": ["assessment_data"]}]},
+     text: "يمكن أن يساعد التقويم الفردي القصير على كشف تفاوت الفهم بين الطالبات. وتفيد الأسئلة التشخيصية في تحديد جوانب الصعوبة قبل اختيار التدخل." },
+   { id: "A2", when: {"all": [{"q": "alternatives", "pick": ["dialogue_listen"]}, {"q": "evidence", "pick": ["student_view"]}]},
+     text: "يتيح الحوار فهم تصورات الطالبات وأسباب استجاباتهن، مما قد يساعد على اختيار تدخل يستجيب لطبيعة الموقف." },
+   { id: "A3", when: {"all": [{"q": "alternatives", "pick": ["differentiated"]}, {"q": "evidence", "pick": ["conditions"]}]},
+     text: "يمكن توجيه الدعم بصورة أكثر ملاءمة عندما يستند إلى احتياجات الطالبات، بدل تقديم الإجراء نفسه للجميع." },
+   { id: "A4", when: {"all": [{"q": "alternatives", "pick": ["change_method"]}, {"q": "evidence", "pick": ["assessment_data"]}]},
+     text: "قد تساعد نتائج التقويم التشخيصي على تحديد المفاهيم التي تحتاج إلى طريقة شرح مختلفة، بدل تغيير النشاط دون معرفة موضع الصعوبة." },
+   { id: "A5", when: {"all": [{"q": "alternatives", "pick": ["reorganize"]}, {"q": "evidence", "pick": ["observation"]}]},
+     text: "يمكن أن تساعد الملاحظة المنظمة على تحديد الظروف التي يظهر فيها السلوك أو التعثر، ثم اختبار أثر تعديل تنظيم النشاط." },
+   { id: "A6", when: {"all": [{"q": "alternatives", "pick": ["consult"]}, {"q": "evidence", "pick": ["consult"]}]},
+     text: "قد تساعد الاستشارة المهنية على توسيع البدائل المتاحة، خاصة عند تكرار الموقف أو عدم وضوح أسبابه." },
+  ]
+ },
+ {
+  id: "improvement", title: "توجيه التحسين وقياس الأثر",
+  fallback: "حددي مؤشرًا واحدًا قابلًا للملاحظة يرتبط بخطوة التحسين التي اخترتِها، وقارني ما يحدث قبل التطبيق وبعده متى أمكن.",
+  rules: [
+   { id: "I1", when: {"all": [{"q": "step", "pick": ["short_assessment"]}, {"q": "measure", "pick": ["compare_assessment"]}]},
+     text: "عند مقارنة النتائج، استخدمي أسئلة تقيس الهدف التعليمي نفسه وبمستوى صعوبة متقارب؛ حتى تكون المقارنة أكثر دلالة." },
+   { id: "I2", when: {"all": [{"q": "step", "pick": ["new_strategy"]}, {"q": "measure", "pick": ["goal_attainment"]}]},
+     text: "حددي مؤشرًا واضحًا لتحقيق هدف التعلم قبل تجربة الاستراتيجية، ثم تحققي من مدى تحقق المؤشر بعد تطبيقها." },
+   { id: "I3", when: {"all": [{"q": "step", "pick": ["dialogue_time"]}, {"q": "measure", "pick": ["student_feedback"]}]},
+     text: "يمكن الاستفادة من التغذية الراجعة لفهم تجربة الطالبات، مع مراعاة أن آراءهن لا تكفي وحدها للحكم على تحقق التعلم." },
+   { id: "I4", when: {"all": [{"q": "step", "pick": ["extra_support"]}, {"q": "measure", "pick": ["student_performance"]}]},
+     text: "حددي المهارة أو السلوك المستهدف بالدعم، ثم تابعي تغير الأداء باستخدام ملاحظات محددة قابلة للمقارنة." },
+   { id: "I5", when: {"all": [{"q": "step", "pick": ["reorganize"]}, {"q": "measure", "pick": ["behavior_recurrence"]}]},
+     text: "سجلي عدد مرات ظهور السلوك أو المشكلة قبل تعديل النشاط وبعده، مع مراعاة اختلاف ظروف الحصص." },
+   { id: "I6", when: {"all": [{"q": "step", "pick": ["new_strategy"]}, {"q": "measure", "pick": ["participation"]}]},
+     text: "تابعي المشاركة أثناء تنفيذ الاستراتيجية، وتحققي أيضًا من تحقق التعلم؛ فارتفاع التفاعل لا يعني بالضرورة تحسن الفهم." },
+  ]
+ },
 ];
-const NO_RULE = "يمكنك العودة إلى إجاباتك والتفكير في الأدلة التي تدعم قراراتك، والبدائل الممكنة في المواقف المشابهة.";
+
+function matchNode(n) {
+  if (n.all) return n.all.every(matchNode);
+  if (n.any) return n.any.some(matchNode);
+  return hasAny(n.q, ...n.pick);
+}
+// Returns one insight per level: { level, title, ruleId (null when the fallback is used), text }.
 function analyze() {
-  const groups = new Set(), out = [];
-  for (const r of RULES) {
-    if (out.length >= 3) break;
-    if (groups.has(r.group) || !r.on()) continue;
-    groups.add(r.group); out.push(r);
-  }
-  return out;
+  return INSIGHT_LEVELS.map((lv) => {
+    const r = lv.rules.find((x) => matchNode(x.when));
+    return { level: lv.id, title: lv.title, ruleId: r ? r.id : null, text: r ? r.text : lv.fallback };
+  });
 }
 
 // ---------- Report ----------
@@ -894,7 +936,7 @@ function renderDone() {
     $("#contBtn").onclick = () => { state.view = "session"; state.step = miss; save(); render(); window.scrollTo(0, 0); };
     return;
   }
-  const notes = analyze();
+  const insights = analyze();
   const hasAction = selOf("step").length > 0;
 
   const personal =
@@ -925,7 +967,7 @@ function renderDone() {
       </div>
       <div class="sec"><h2 class="sec-h">تأملي الشخصي</h2>${personal}</div>
       <div class="sec"><h2 class="sec-h">زوايا إضافية للتفكير</h2>
-        <ul class="notes">${(notes.length ? notes.map((r) => r.text) : [NO_RULE]).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
+        ${insights.map((n) => `<div class="group"><h3>${esc(n.title)}</h3><ul class="notes"><li data-level="${n.level}" data-rule="${n.ruleId || ""}">${esc(n.text)}</li></ul></div>`).join("")}
       </div>
       <div class="sec"><h2 class="sec-h">خطتي للتحسين</h2><div class="plan">${plan}</div></div>
     </section>`;
