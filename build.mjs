@@ -16,6 +16,8 @@ ${src.slice(cut)}</body>
 `;
 mkdirSync(new URL("./public/", import.meta.url), { recursive: true });
 writeFileSync(new URL("./public/index.html", import.meta.url), html);
-// The approved banner is served from the site itself at /banner.png.
-copyFileSync(new URL("./Reflective Teaching Tool Banner.png", import.meta.url), new URL("./public/banner.png", import.meta.url));
-console.log("built public/index.html and public/banner.png");
+// Approved logos, served from the site itself (original files stay untouched in the repo root).
+const pub = (f) => new URL("./public/" + f, import.meta.url);
+copyFileSync(new URL("./KAU_logo.png", import.meta.url), pub("KAU_logo.png"));
+copyFileSync(new URL("./Reflective Investigator Logo.png", import.meta.url), pub("reflective-investigator-logo.png"));
+console.log("built public/index.html and logos");

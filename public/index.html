@@ -6,7 +6,7 @@
 <style>[hidden]{display:none!important}html{color-scheme:light}body{margin:0}</style>
 <title>المحقق التأملي</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
 <style>
 /* Minimal modern app: slim header, narrow collapsible sidebar, centered reading column. */
 :root {
@@ -26,8 +26,9 @@
   --font: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
   --gutter-l: max(16px, env(safe-area-inset-left, 0px));
   --gutter-r: max(16px, env(safe-area-inset-right, 0px));
-  /* banner: shows the top 330px of the 2172x724 image (everything down to the gold line) */
-  --bh: max(108px, 15.19vw);
+  --bh: 132px;           /* approximate header height */
+  --th: 108px;           /* height of the tool logo mark */
+  --font-uni: "Alexandria", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
   --banner-bg: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
@@ -57,14 +58,21 @@ button, textarea { font-size: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-/* header: approved banner image, full width, natural proportions */
-.top { position: relative; height: var(--bh); overflow: hidden; background: var(--banner-bg); }
-.top h1 { margin: 0; position: absolute; inset: 0; }
-.banner-img { position: absolute; top: 0; right: 0; display: block; max-width: none; height: auto; width: max(100%, calc(var(--bh) * 6.582)); }
+/* header: university logo and texts (start), tool logo (center), menu button (end) */
+.top { background: var(--banner-bg); border-bottom: 1px solid var(--gold); padding-block: 8px; padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+.top-in { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+.uni { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.kau { flex: none; height: 72px; width: auto; display: block; }
+.uni-t { font-family: var(--font-uni); color: #3f5a62; line-height: 1.5; min-width: 0; }
+.uni-t p { margin: 0; font-size: .78rem; font-weight: 400; }
+.uni-t p.u1 { font-size: .95rem; font-weight: 600; color: #0f5560; }
+/* The tool logo file has wide transparent margins; the box shows the logo area only (the file is unchanged). */
+.tool { margin: 0; line-height: 0; justify-self: center; position: relative; overflow: hidden; height: var(--th); width: calc(var(--th) * 1.2192); }
+.tool img { position: absolute; display: block; max-width: none; height: auto; width: calc(var(--th) * 1.4849); left: calc(var(--th) * -0.1334); top: calc(var(--th) * -0.1752); }
+.menu-cell { justify-self: end; }
 .menu-btn {
-  position: absolute; top: 8px; left: max(8px, env(safe-area-inset-left, 0px)); z-index: 2;
   width: 40px; height: 40px; display: grid; place-items: center;
-  background: rgba(255, 255, 255, .92); border: 1px solid #dbe5e8; border-radius: 10px; color: #0f5560;
+  background: #fff; border: 1px solid #dbe5e8; border-radius: 10px; color: #0f5560;
 }
 .menu-btn:hover { background: #e8f2f3; }
 
@@ -183,6 +191,30 @@ textarea.sm { min-height: 84px; }
 .plan .item { border-bottom: 0; padding: 8px 0; }
 .plan .item h4 { color: var(--teal); font-weight: 600; font-size: .9rem; }
 
+@media (max-width: 700px) {
+  .top-in { grid-template-columns: auto 1fr auto; gap: 8px; }
+}
+@media (max-width: 640px) {
+  :root { --bh: 96px; --th: 78px; }
+  .top { padding-block: 6px; }
+  .kau { height: 50px; }
+  .uni { gap: 8px; }
+  .uni-t p { font-size: .62rem; line-height: 1.4; }
+  .uni-t p.u1 { font-size: .7rem; }
+  .menu-btn { width: 36px; height: 36px; }
+}
+@media (max-width: 400px) {
+  :root { --th: 70px; }
+  .uni-t p { font-size: .56rem; }
+  .uni-t p.u1 { font-size: .64rem; }
+  .uni { gap: 6px; }
+}
+@media (max-width: 359px) {
+  .uni-t p { font-size: .5rem; }
+  .uni-t p.u1 { font-size: .58rem; }
+  :root { --th: 62px; }
+  .kau { height: 42px; }
+}
 @media (max-width: 800px) {
   .side {
     position: fixed; z-index: 35; top: 0; right: 0; height: 100dvh; width: min(220px, 72vw);
@@ -215,10 +247,23 @@ textarea.sm { min-height: 84px; }
 </head>
 <body>
 <header class="top">
-  <h1><img class="banner-img" src="banner.png" width="2172" height="724" alt="المحقق التأملي — أداة لدعم المعلمة في ممارسة التدريس التأملي"></h1>
-  <button class="menu-btn" id="menuBtn" type="button" aria-label="القائمة الجانبية" aria-controls="side" aria-expanded="true">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-  </button>
+  <div class="top-in">
+    <div class="uni">
+      <img class="kau" src="KAU_logo.png" width="301" height="383" alt="شعار جامعة الملك عبدالعزيز">
+      <div class="uni-t">
+        <p class="u1">جامعة الملك عبدالعزيز</p>
+        <p>كلية التربية</p>
+        <p>قسم المناهج وطرق التدريس</p>
+        <p>ماجستير المناهج وطرق التدريس</p>
+      </div>
+    </div>
+    <h1 class="tool"><img src="reflective-investigator-logo.png" width="1280" height="1229" alt="المحقق التأملي — أداة لدعم المعلمة في ممارسة التدريس التأملي"></h1>
+    <div class="menu-cell">
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="القائمة الجانبية" aria-controls="side" aria-expanded="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
 </header>
 
 <div class="shell">
