@@ -106,9 +106,9 @@ const TITLE = { 'المستوى الأول': 'decision', 'المستوى الث�
     step: { sel: ['dialogue_time'], text: 'a' }, measure: { sel: ['student_feedback'] }, learning: { text: 'a' }, reminder: { text: 'a' } } });
   const load = async (st) => { await pg.evaluate(([K, s]) => localStorage.setItem(K, JSON.stringify(s)), [KEY, st]); await pg.reload(); await pg.waitForTimeout(100); };
   await load(full());
-  const heads = await pg.locator('.sec:has(.notes) h3').allInnerTexts();
+  const heads = await pg.locator('.insight h3').allInnerTexts();
   ok(JSON.stringify(heads) === JSON.stringify(levels.map((l) => l.title)), 'report shows the three level headings: ' + heads);
-  const lis = await pg.locator('.notes li').evaluateAll((els) => els.map((e) => [e.dataset.rule, e.textContent]));
+  const lis = await pg.locator('.notes li').evaluateAll((els) => els.map((e) => [e.dataset.rule, e.querySelector('p').textContent]));
   ok(lis.map((x) => x[0]).join() === 'D2,A2,I3', 'report keeps the activated rule ids: ' + lis.map((x) => x[0]));
   ok(lis[0][1] === levels[0].rules[1].text && lis[1][1] === levels[1].rules[1].text && lis[2][1] === levels[2].rules[2].text, 'report shows the exact approved texts');
   // changing choices updates the insights (no stale text)

@@ -1,0 +1,18 @@
+{
+  "note": "Test data written for tests only (a lesson on physical and chemical changes). Not real teacher data.",
+  "view": "done", "step": 11, "counted": true,
+  "answers": {
+    "situation": { "text": "أثناء شرح درس التغيرات الفيزيائية والكيميائية، لاحظتُ أن عددًا من الطالبات أجبن عن الأمثلة بصورة متشابهة، وبدا أنهن يخلطن بين ذوبان السكر في الماء واحتراق الورق. توقفتُ عند المثالين وطلبتُ منهن المقارنة بينهما." },
+    "action": { "sel": ["change_method"], "text": "انتقلتُ من الشرح المباشر إلى نشاط قصير لتصنيف أمثلة من الحياة اليومية إلى تغيرات فيزيائية وكيميائية." },
+    "goal": { "sel": ["understanding"] },
+    "reason": { "sel": ["judgment"], "text": "رأيتُ أن التصنيف بالأمثلة أقرب لما يحتاج إليه الصف في تلك اللحظة." },
+    "result": { "sel": ["undetermined"] },
+    "blindspots": { "sel": ["insufficient_evidence"], "text": "لم أجمع ما يكفي من الأدلة لأعرف هل فهمت جميع الطالبات الفرق بين التغيرين أم اكتفين بحفظ الأمثلة." },
+    "alternatives": { "sel": ["short_assessment", "change_method"] },
+    "evidence": { "sel": ["assessment_data", "observation"] },
+    "step": { "sel": ["short_assessment"], "text": "سأضيف في منتصف الحصة ثلاثة أسئلة قصيرة عن علامات التغير الكيميائي، وأحدد قبلها الإجابات المتوقعة." },
+    "measure": { "sel": ["compare_assessment", "goal_attainment"] },
+    "learning": { "text": "تعلمتُ أن الأمثلة الناجحة في الحصة لا تكفي وحدها للحكم على الفهم، وأنني أحتاج إلى مؤشر مكتوب قبل الدرس." },
+    "reminder": { "text": "أحدد قبل الحصة مؤشرًا بسيطًا للفهم، وأتحقق منه بعد النشاط مباشرة." }
+  }
+}

@@ -105,7 +105,8 @@ const IDS = ['situation', 'action', 'goal', 'reason', 'result', 'blindspots', 'a
   // report shows no old fields
   await load(full()); const rep = await body();
   ok(!/مؤشر المتابعة|عند مواجهة موقف مشابه|ما الدليل الذي سأبحث عنه/.test(rep), 'no old report fields');
-  ok(rep.includes('ما الذي سأفعله؟') && rep.includes('كيف سأطبقه؟') && rep.includes('كيف سأتحقق من أثره؟'), 'plan rows present');
+  ok(['موقفي وقراري', 'ماذا تعلمت من الموقف؟', 'خطتي للتحسين', 'رؤى تربوية مقترحة'].every((t) => rep.includes(t)), 'four report sections');
+  ok(rep.includes('خطوة التحسين المختارة') && rep.includes('كيف سأطبقها؟') && rep.includes('كيف سأقيس أثرها؟'), 'plan fields present');
   ok(await pg.locator('#evalLi a').count() === 1, 'feedback link when complete');
 
   ok(errs.length === 0, 'no page errors: ' + errs.join('|'));

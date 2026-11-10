@@ -167,29 +167,68 @@ textarea.sm { min-height: 84px; }
 .confirm { margin-top: 16px; padding: 14px 16px; border: 1px solid var(--gold); background: var(--gold-soft); border-radius: 10px; }
 .confirm p { margin: 0 0 12px; }
 
-/* report */
-.rep-head { display: grid; gap: 14px; margin-bottom: 4px; }
-.rep-head h2 { margin: 0; font-size: 1.6rem; color: var(--teal); line-height: 1.4; }
-.rep-head .btn { min-height: 38px; padding: 4px 14px; font-size: .88rem; }
-.sec { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--line); }
-.sec-h { margin: 0 0 18px; font-size: 1.25rem; color: var(--teal); line-height: 1.4; }
-.group { margin-bottom: 22px; }
-.group h3 { margin: 0 0 6px; font-size: .85rem; font-weight: 600; color: var(--gold-ink); }
-.item { display: grid; grid-template-columns: 9rem minmax(0, 1fr); column-gap: 20px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.group .item:last-child { border-bottom: 0; }
-.item h4 { grid-column: 1; grid-row: 1 / span 12; margin: 2px 0 0; font-size: .85rem; font-weight: 500; color: var(--muted); }
-.item > :not(h4) { grid-column: 2; }
-.ans { margin: 0 0 4px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1rem; }
-.fq { margin: 8px 0 2px; font-size: .82rem; color: var(--muted); }
-.sub { margin: 10px 0 2px; font-size: .82rem; color: var(--muted); }
-.none { margin: 0; color: var(--muted); font-size: .9rem; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-.chip { justify-self: start; display: inline-block; padding: 1px 12px; margin-bottom: 4px; border-radius: 99px; background: var(--teal-soft); color: var(--teal); font-size: .85rem; font-weight: 600; }
-.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; }
-.notes li { padding-inline-start: 14px; border-inline-start: 2px solid var(--teal-soft); font-size: 1rem; line-height: 1.85; }
-.plan { padding-inline-start: 16px; border-inline-start: 3px solid var(--gold); display: grid; gap: 2px; }
-.plan .item { border-bottom: 0; padding: 8px 0; }
-.plan .item h4 { color: var(--teal); font-weight: 600; font-size: .9rem; }
+/* report: modern analytical document on a white sheet (fixed light colors, also used for print) */
+.rep-actions { display: grid; gap: 10px; margin-bottom: 14px; }
+.rep-actions .btn { min-height: 38px; padding: 4px 14px; font-size: .88rem; }
+.ans { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.none { margin: 0; color: #5b727a; font-size: .9em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+.chip { display: inline-block; padding: 1px 11px; border-radius: 99px; border: 1px solid #b9d3d6; background: #eef5f6; color: #0f5560; font-size: .86em; font-weight: 600; }
+.chips:last-child { margin-bottom: 0; }
+.doc {
+  --d-ink: #17323a; --d-mut: #5b727a; --d-line: #dbe5e8; --d-teal: #0f5560; --d-teal-soft: #eef5f6;
+  --d-gold: #b8923a; --d-gold-ink: #86661b; --d-gold-soft: #fbf7ec; --d-leaf: #3f6f37; --d-leaf-soft: #f1f6ef;
+  font-family: var(--font-uni); background: #fff; color: var(--d-ink); font-size: .95rem; line-height: 1.8;
+  border: 1px solid var(--d-line); border-radius: 12px; padding: 28px 30px;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.doc h2, .doc h3, .doc h4, .doc p { margin: 0; }
+.dh { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--d-gold); }
+.dh-uni { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.dh-uni img { flex: none; height: 62px; width: auto; display: block; }
+.dh-t p { font-size: .76rem; line-height: 1.5; color: #3f5a62; }
+.dh-t p:first-child { font-size: .92rem; font-weight: 600; color: var(--d-teal); }
+.dh-tool { flex: none; position: relative; overflow: hidden; --th: 74px; height: var(--th); width: calc(var(--th) * 1.2192); }
+.dh-tool img { position: absolute; display: block; max-width: none; height: auto; width: calc(var(--th) * 1.4849); left: calc(var(--th) * -0.1334); top: calc(var(--th) * -0.1752); }
+.dt { padding: 18px 0 4px; }
+.dt h2 { font-size: 1.7rem; font-weight: 600; line-height: 1.4; color: var(--d-teal); }
+.dt p { font-size: .98rem; color: var(--d-mut); }
+.rsec { margin-top: 24px; }
+.rh { display: flex; align-items: baseline; gap: 10px; padding-bottom: 7px; margin-bottom: 12px; border-bottom: 1px solid var(--d-line); font-size: 1.15rem; font-weight: 600; color: var(--d-teal); line-height: 1.5; }
+.rh .no { color: var(--d-gold-ink); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.field { border: 1px solid var(--d-line); border-radius: 8px; padding: 8px 12px; min-width: 0; }
+.field h4, .lead h4, .quote h4 { margin-bottom: 3px; font-size: .78rem; font-weight: 500; color: var(--d-mut); }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stack { display: grid; gap: 10px; }
+.lead { padding: 10px 14px; border: 1px solid #b9d3d6; border-inline-start: 4px solid var(--d-teal); border-radius: 8px; background: var(--d-teal-soft); }
+.lead .ans { font-size: 1.02rem; }
+.quote { padding: 4px 14px; border-inline-start: 3px solid var(--d-gold); }
+.quote .ans { font-size: 1.02rem; }
+.flow { display: grid; }
+.stage { position: relative; padding-inline-start: 22px; padding-bottom: 14px; border-inline-start: 2px solid var(--d-line); }
+.stage:last-child { padding-bottom: 0; border-inline-color: transparent; }
+.stage::before { content: ""; position: absolute; inset-inline-start: -6px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--d-gold); }
+.stage > h3 { margin-bottom: 6px; font-size: .82rem; font-weight: 600; color: var(--d-gold-ink); }
+.insights-note { margin: -4px 0 10px; font-size: .84rem; color: var(--d-mut); }
+.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.insight { padding: 9px 14px; border: 1px solid var(--d-line); border-top-width: 3px; border-radius: 8px; }
+.insight h3 { margin-bottom: 2px; font-size: .84rem; font-weight: 600; }
+.insight p { font-size: .96rem; }
+.insight.lv-decision { border-top-color: var(--d-teal); background: var(--d-teal-soft); }
+.insight.lv-decision h3 { color: var(--d-teal); }
+.insight.lv-alternatives { border-top-color: var(--d-gold); background: var(--d-gold-soft); }
+.insight.lv-alternatives h3 { color: var(--d-gold-ink); }
+.insight.lv-improvement { border-top-color: var(--d-leaf); background: var(--d-leaf-soft); }
+.insight.lv-improvement h3 { color: var(--d-leaf); }
+.col:has(.report) { max-width: 860px; }
+@media (max-width: 640px) {
+  .doc { padding: 18px 16px; }
+  .dh { flex-wrap: wrap; }
+  .dh-uni img { height: 50px; }
+  .dh-tool { --th: 60px; }
+  .dt h2 { font-size: 1.4rem; }
+  .fields { grid-template-columns: minmax(0, 1fr); }
+}
 
 @media (max-width: 700px) {
   .top-in { grid-template-columns: auto 1fr auto; gap: 8px; }
@@ -228,19 +267,34 @@ textarea.sm { min-height: 84px; }
   .home h2 { font-size: 1.6rem; }
   .q { font-size: 1.3rem; }
   .prog { margin-bottom: 22px; }
-  .item { display: block; }
-  .item h4 { margin: 0 0 2px; }
-  .rep-head h2 { font-size: 1.4rem; }
 }
+@page { size: A4; margin: 11mm 13mm; }
 @media print {
-  :root:root:root:root { --bg:#fff; --surface:#fff; --fg:#111; --muted:#444; --line:#ccc; --teal:#0f5560; --teal-soft:#eef5f6; --gold:#8a6a1e; --gold-ink:#8a6a1e; color-scheme: light; }
-  .top, .side, .backdrop, .no-print, body::before { display: none !important; }
+  html, body { background: #fff !important; height: auto; }
+  body { font-size: 10pt; }
+  .top, .side, .backdrop, .no-print, .rep-actions, body::before { display: none !important; }
   .shell { display: block; min-height: 0; }
   main { padding: 0; }
-  .col, .col:has(.report) { max-width: none; }
-  .item { display: block; }
-  .group, .item, .plan { break-inside: avoid; }
-  .sec-h, .group h3 { break-after: avoid; }
+  .col, .col:has(.report) { max-width: none; margin: 0; }
+  .doc { border: 0; border-radius: 0; padding: 0; font-size: 10pt; line-height: 1.65; }
+  .dh { padding-bottom: 8px; }
+  .dh-uni img { height: 15mm; }
+  .dh-t p { font-size: 8pt; }
+  .dh-t p:first-child { font-size: 10pt; }
+  .dh-tool { --th: 19mm; }
+  .dt { padding: 10px 0 2px; }
+  .dt h2 { font-size: 19pt; }
+  .dt p { font-size: 10pt; }
+  .rsec { margin-top: 13px; }
+  .rh { font-size: 12.5pt; margin-bottom: 8px; padding-bottom: 4px; break-after: avoid; }
+  .field, .lead, .quote, .stage, .insight, .fields > * { break-inside: avoid; }
+  .field h4, .lead h4, .quote h4 { font-size: 8pt; }
+  .stage > h3 { break-after: avoid; }
+  .insight p, .lead .ans, .quote .ans { font-size: 10pt; }
+  .insights-note { font-size: 8.5pt; }
+  .chip { font-size: 8.5pt; }
+  .ans { orphans: 3; widows: 3; }
+  .doc > *:last-child, .rsec:last-child { margin-bottom: 0; }
 }
 </style>
 
@@ -922,8 +976,11 @@ function entry(qid, mode = "all", quiet = false) {
   if (mode !== "choices" && hasWrite(q) && (a.text || "").trim()) h += para(a.text.trim());
   return h || (quiet ? "" : NONE);
 }
-const item = (cap, html) => `<div class="item"><h4>${esc(cap)}</h4>${html}</div>`;
-const group = (title, items) => `<div class="group"><h3>${esc(title)}</h3>${items.join("")}</div>`;
+const fld = (cap, html, cls = "") => `<div class="field ${cls}"><h4>${esc(cap)}</h4>${html}</div>`;
+const lead = (cap, html) => `<div class="lead"><h4>${esc(cap)}</h4>${html}</div>`;
+const quote = (cap, html) => `<div class="quote"><h4>${esc(cap)}</h4>${html}</div>`;
+const rsec = (no, title, body) => `<section class="rsec"><h3 class="rh"><span class="no">${no}</span><span>${esc(title)}</span></h3>${body}</section>`;
+const INSIGHTS_NOTE = "رؤى مقترحة بناءً على اختياراتك، لدعم التفكير التأملي وليست تقييمًا لأدائك التدريسي.";
 
 function renderDone() {
   const miss = firstMissing();
@@ -938,38 +995,67 @@ function renderDone() {
   }
   const insights = analyze();
   const hasAction = selOf("step").length > 0;
+  const stepIdx = QUESTIONS.findIndex((q) => q.id === "step");
 
-  const personal =
-    group("الموقف التدريسي", [item("وصف الموقف", entry("situation")), item("تصرفي", entry("action"))]) +
-    group("فهم قراري", [item("الهدف من التصرف", entry("goal")), item("أسباب اتخاذ القرار", entry("reason"))]) +
-    group("مراجعة ما حدث", [item("نتيجة التصرف", entry("result")), item("ما أعدت التفكير فيه", entry("blindspots"))]) +
-    group("البدائل والأدلة", [item("البدائل التي كان بإمكاني استخدامها", entry("alternatives")), item("المعلومات والأدلة التي أحتاج إليها", entry("evidence"))]) +
-    group("ما تعلمته", [item("اكتشافي", entry("learning")), item("تذكيري لنفسي", entry("reminder"))]);
-
-  const plan = [
-    item("ما الذي سأفعله؟", hasAction ? entry("step", "choices")
-      : `<p class="none">لم يتم تحديد إجراء بعد</p><button class="link-btn no-print" type="button" data-goto="${QUESTIONS.findIndex((q) => q.id === "step")}">تعديل إجابة السؤال 9</button>`),
-    item("كيف سأطبقه؟", entry("step", "text")),
-    item("كيف سأتحقق من أثره؟", entry("measure"))
-  ].join("");
+  const s1 = rsec("01", "موقفي وقراري",
+    `<div class="stack">
+      ${lead("وصف الموقف", entry("situation"))}
+      ${fld("تصرفي", entry("action"))}
+      <div class="fields">${fld("الهدف من التصرف", entry("goal"))}${fld("نتيجة التصرف", entry("result"))}</div>
+      ${fld("أسباب اتخاذ القرار", entry("reason"))}
+    </div>`);
+  const s2 = rsec("02", "ماذا تعلمت من الموقف؟",
+    `<div class="stack">
+      ${fld("ما أعدت التفكير فيه", entry("blindspots"))}
+      ${quote("اكتشافي", entry("learning"))}
+      ${quote("تذكيري لنفسي", entry("reminder"))}
+    </div>`);
+  const s3 = rsec("03", "خطتي للتحسين",
+    `<div class="flow">
+      <div class="stage"><h3>البدائل والأدلة</h3><div class="stack">
+        ${fld("البدائل التي كان بإمكاني استخدامها", entry("alternatives"))}
+        ${fld("المعلومات والأدلة التي أحتاج إليها", entry("evidence"))}
+      </div></div>
+      <div class="stage"><h3>الإجراء</h3><div class="stack">
+        ${fld("خطوة التحسين المختارة", hasAction ? entry("step", "choices")
+          : `<p class="none">لم يتم تحديد إجراء بعد</p><button class="link-btn no-print" type="button" data-goto="${stepIdx}">تعديل إجابة السؤال 9</button>`)}
+        ${fld("كيف سأطبقها؟", entry("step", "text"))}
+      </div></div>
+      <div class="stage"><h3>قياس الأثر</h3><div class="stack">
+        ${fld("كيف سأقيس أثرها؟", entry("measure"))}
+      </div></div>
+    </div>`);
+  const s4 = rsec("04", "رؤى تربوية مقترحة",
+    `<p class="insights-note">${esc(INSIGHTS_NOTE)}</p>
+    <ul class="notes">${insights.map((n) => `<li class="insight lv-${n.level}" data-level="${n.level}" data-rule="${n.ruleId || ""}"><h3>${esc(n.title)}</h3><p>${esc(n.text)}</p></li>`).join("")}</ul>`);
 
   view.innerHTML = `
     <section class="report">
-      <div class="rep-head">
-        <h2>تقريري التأملي</h2>
-        <div class="row no-print">
+      <div class="rep-actions no-print">
+        <div class="row">
           <button class="btn btn-ghost" type="button" id="editBtn">تعديل إجاباتي</button>
           <button class="btn btn-ghost" type="button" id="printBtn">طباعة التقرير / حفظ PDF</button>
           <button class="btn btn-ghost" type="button" id="resetBtn">بدء تأمل جديد</button>
         </div>
-        <p class="saved no-print" id="printHint" hidden>إذا لم تظهر نافذة الطباعة، افتحي الأداة في نافذة المتصفح ثم اضغطي Ctrl+P.</p>
-        <div id="confirmBox" class="no-print"></div>
+        <p class="saved" id="printHint" hidden>إذا لم تظهر نافذة الطباعة، افتحي الأداة في نافذة المتصفح ثم اضغطي Ctrl+P. لإخفاء ترويسة المتصفح وتذييله من ملف PDF، عطّلي خيار Headers and footers في نافذة الطباعة.</p>
+        <div id="confirmBox"></div>
       </div>
-      <div class="sec"><h2 class="sec-h">تأملي الشخصي</h2>${personal}</div>
-      <div class="sec"><h2 class="sec-h">زوايا إضافية للتفكير</h2>
-        ${insights.map((n) => `<div class="group"><h3>${esc(n.title)}</h3><ul class="notes"><li data-level="${n.level}" data-rule="${n.ruleId || ""}">${esc(n.text)}</li></ul></div>`).join("")}
-      </div>
-      <div class="sec"><h2 class="sec-h">خطتي للتحسين</h2><div class="plan">${plan}</div></div>
+      <article class="doc">
+        <header class="dh">
+          <div class="dh-uni">
+            <img src="KAU_logo.png" width="301" height="383" alt="شعار جامعة الملك عبدالعزيز">
+            <div class="dh-t">
+              <p>جامعة الملك عبدالعزيز</p>
+              <p>كلية التربية</p>
+              <p>قسم المناهج وطرق التدريس</p>
+              <p>ماجستير المناهج وطرق التدريس</p>
+            </div>
+          </div>
+          <div class="dh-tool"><img src="reflective-investigator-logo.png" width="1280" height="1229" alt="المحقق التأملي"></div>
+        </header>
+        <div class="dt"><h2>تقريري التأملي</h2><p>توثيق الممارسة والتفكير في فرص التحسين</p></div>
+        ${s1}${s2}${s3}${s4}
+      </article>
     </section>`;
 
   $("#editBtn").onclick = () => { state.view = "session"; state.step = N - 1; save(); render(); window.scrollTo(0, 0); };
