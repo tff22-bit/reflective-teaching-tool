@@ -25,7 +25,17 @@ const LONG = ' وهذه جملة إضافية طويلة لاختبار التف
   for (const [k, a] of Object.entries(sc.answers)) for (const id of a.sel || []) ok(count(labels[k + '.' + id]) >= 1, `choice ${k}.${id} is shown`);
   ok(count(labels['alternatives.short_assessment']) === 1 && count(labels['step.short_assessment']) === 1, 'the same word in two questions is shown once per question');
   const heads = await pg.locator('.rh').allInnerTexts();
-  ok(JSON.stringify(heads.map((h) => h.replace(/\s+/g, ' ').trim())) === JSON.stringify(['01 موقفي وقراري', '02 ماذا تعلمت من الموقف؟', '03 خطتي للتحسين', '04 رؤى تربوية مقترحة']), 'four numbered sections in order: ' + heads);
+  const TITLES = ['01 وصف الموقف والقرار', '02 مراجعة القرار ونتيجته', '03 البدائل والأدلة', '04 خطة التحسين وقياس الأثر', '05 ما تعلمته المعلمة وتذكيرها لنفسها', '06 الرؤى التربوية المقترحة'];
+  ok(JSON.stringify(heads.map((h) => h.replace(/\s+/g, ' ').trim())) === JSON.stringify(TITLES), 'six numbered sections in the approved order: ' + heads);
+  // every answer sits in its own section, and only there
+  const secs = await pg.locator('.rsec').evaluateAll((els) => els.map((e) => e.innerText));
+  const where = { situation: 0, action: 0, goal: 0, reason: 1, result: 1, blindspots: 1, alternatives: 2, evidence: 2, step: 3, measure: 3, learning: 4, reminder: 4 };
+  for (const [k, a] of Object.entries(sc.answers)) {
+    const parts = [...(a.sel || []).map((id) => labels[k + '.' + id]), a.text].filter(Boolean);
+    for (const t of parts) secs.forEach((sx, i) => ok((sx.includes(t)) === (i === where[k]), `${k}: "${t.slice(0, 24)}" is in section ${where[k] + 1} only (found in ${i + 1}: ${sx.includes(t)})`));
+  }
+  const ins = await pg.locator('.insight').evaluateAll((e) => e.map((x) => x.closest('.rsec') === document.querySelectorAll('.rsec')[5]));
+  ok(ins.length === 3 && ins.every(Boolean), 'the three insights are all in section 06');
   ok((await pg.locator('.dt h2').innerText()) === 'تقريري التأملي' && (await pg.locator('.dt p').innerText()) === 'توثيق الممارسة والتفكير في فرص التحسين', 'title and subtitle');
   ok((await pg.locator('.insights-note').innerText()) === 'رؤى مقترحة بناءً على اختياراتك، لدعم التفكير التأملي وليست تقييمًا لأدائك التدريسي.', 'insights note');
   ok((await pg.locator('.insight h3').allInnerTexts()).join('|') === 'قراءة القرار التدريسي|البدائل والأدلة|توجيه التحسين وقياس الأثر', 'three insight cards in order');

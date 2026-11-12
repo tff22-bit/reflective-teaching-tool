@@ -1025,26 +1025,26 @@ function renderDone() {
   const hasAction = selOf("step").length > 0;
   const stepIdx = QUESTIONS.findIndex((q) => q.id === "step");
 
-  const s1 = rsec("01", "موقفي وقراري",
+  const s1 = rsec("01", "وصف الموقف والقرار",
     `<div class="stack">
       ${lead("وصف الموقف", entry("situation"))}
-      ${fld("تصرفي", entry("action"))}
-      <div class="fields">${fld("الهدف من التصرف", entry("goal"))}${fld("نتيجة التصرف", entry("result"))}</div>
-      ${resultEvidence ? fld("الدليل على النتيجة", para(resultEvidence)) : ""}
-      ${fld("أسباب اتخاذ القرار", entry("reason"))}
+      ${fld("كيف تعاملتُ مع الموقف؟", entry("action"))}
+      ${fld("الهدف الأساسي من التصرف", entry("goal"))}
     </div>`);
-  const s2 = rsec("02", "ماذا تعلمت من الموقف؟",
+  const s2 = rsec("02", "مراجعة القرار ونتيجته",
     `<div class="stack">
-      ${fld("ما أعدت التفكير فيه", entry("blindspots"))}
-      ${quote("اكتشافي", entry("learning"))}
-      ${quote("تذكيري لنفسي", entry("reminder"))}
+      ${fld("سبب اختيار التصرف", entry("reason"))}
+      ${fld("نتيجة التصرف", entry("result"))}
+      ${resultEvidence ? fld("الدليل على النتيجة", para(resultEvidence)) : ""}
+      ${fld("ما ربما لم أنتبه إليه", entry("blindspots"))}
     </div>`);
-  const s3 = rsec("03", "خطتي للتحسين",
+  const s3 = rsec("03", "البدائل والأدلة",
+    `<div class="stack">
+      ${fld("البدائل التي كان بإمكاني استخدامها", entry("alternatives"))}
+      ${fld("المعلومات والأدلة التي أحتاج إليها", entry("evidence"))}
+    </div>`);
+  const s4 = rsec("04", "خطة التحسين وقياس الأثر",
     `<div class="flow">
-      <div class="stage"><h3>البدائل والأدلة</h3><div class="stack">
-        ${fld("البدائل التي كان بإمكاني استخدامها", entry("alternatives"))}
-        ${fld("المعلومات والأدلة التي أحتاج إليها", entry("evidence"))}
-      </div></div>
       <div class="stage"><h3>الإجراء</h3><div class="stack">
         ${fld("خطوة التحسين المختارة", hasAction ? entry("step", "choices")
           : `<p class="none">لم يتم تحديد إجراء بعد</p><button class="link-btn no-print" type="button" data-goto="${stepIdx}">تعديل إجابة السؤال 9</button>`)}
@@ -1054,7 +1054,12 @@ function renderDone() {
         ${fld("كيف سأقيس أثرها؟", entry("measure"))}
       </div></div>
     </div>`);
-  const s4 = rsec("04", "رؤى تربوية مقترحة",
+  const s5 = rsec("05", "ما تعلمته المعلمة وتذكيرها لنفسها",
+    `<div class="stack">
+      ${quote("أهم ما تعلمته", entry("learning"))}
+      ${quote("تذكيري لنفسي", entry("reminder"))}
+    </div>`);
+  const s6 = rsec("06", "الرؤى التربوية المقترحة",
     `<p class="insights-note">${esc(INSIGHTS_NOTE)}</p>
     <ul class="notes">${insights.map((n) => `<li class="insight lv-${n.level}" data-level="${n.level}" data-rule="${n.ruleId || ""}"><h3>${esc(n.title)}</h3><p>${esc(n.text)}</p></li>`).join("")}</ul>`);
 
@@ -1083,7 +1088,7 @@ function renderDone() {
           <div class="dh-tool"><img src="reflective-investigator-logo.png" width="1280" height="1229" alt="المحقق التأملي"></div>
         </header>
         <div class="dt"><h2>تقريري التأملي</h2><p>توثيق الممارسة والتفكير في فرص التحسين</p></div>
-        ${s1}${s2}${s3}${s4}
+        ${s1}${s2}${s3}${s4}${s5}${s6}
       </article>
     </section>`;
 

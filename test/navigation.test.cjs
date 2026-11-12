@@ -95,9 +95,9 @@ const EVID_NOTE = 'اختياري — يمكنك ذكر ملاحظة صفية أ
   const withE = JSON.parse(JSON.stringify(base)); const E = 'لاحظتُ ثلاث إجابات متقاربة\nفي ورقة العمل، ولم يُجرَ تقويم رسمي.'; withE.answers.result = { sel: ['undetermined'], extra: E };
   pg = await open(withE); rep = await pg.locator('.doc').innerText();
   ok(rep.split('الدليل على النتيجة').length === 2 && rep.includes(E.replace('\n', '\n')), 'report: evidence shown once, verbatim');
-  const pos = await pg.evaluate(() => { const labels = [...document.querySelectorAll('.rsec:first-of-type .field h4')].map((h) => h.textContent); return labels; });
-  ok(pos.join('|') === 'تصرفي|الهدف من التصرف|نتيجة التصرف|الدليل على النتيجة|أسباب اتخاذ القرار', 'report: evidence comes right after the result in section 01: ' + pos);
-  ok((await pg.locator('.rh').allInnerTexts()).map((x) => x.replace(/\s+/g, ' ').trim()).join('|') === '01 موقفي وقراري|02 ماذا تعلمت من الموقف؟|03 خطتي للتحسين|04 رؤى تربوية مقترحة', 'report: four sections unchanged');
+  const pos = await pg.evaluate(() => [...document.querySelectorAll('.rsec')[1].querySelectorAll('.field h4')].map((h) => h.textContent));
+  ok(pos.join('|') === 'سبب اختيار التصرف|نتيجة التصرف|الدليل على النتيجة|ما ربما لم أنتبه إليه', 'report: evidence comes right after the result, inside section 02: ' + pos);
+  ok((await pg.locator('.rh').allInnerTexts()).map((x) => x.replace(/\s+/g, ' ').trim()).join('|') === '01 وصف الموقف والقرار|02 مراجعة القرار ونتيجته|03 البدائل والأدلة|04 خطة التحسين وقياس الأثر|05 ما تعلمته المعلمة وتذكيرها لنفسها|06 الرؤى التربوية المقترحة', 'report: six sections in the approved order');
   await pg.emulateMedia({ media: 'print' }); const tmp = fs.mkdtempSync('/tmp/nav-'); await pg.pdf({ path: tmp + '/a.pdf', format: 'A4', preferCSSPageSize: true });
   const pages = (fs.readFileSync(tmp + '/a.pdf').toString('latin1').match(/\/Type\s*\/Page(?![s\w])/g) || []).length; ok(pages === 2, 'report with evidence still prints on 2 pages (' + pages + ')');
   // ---- 7. analysis unaffected by the evidence text
