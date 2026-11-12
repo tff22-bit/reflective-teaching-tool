@@ -1,5 +1,7 @@
 <title>المحقق التأملي</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="color-scheme" content="only light">
+<meta name="supported-color-schemes" content="light">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
 <style>
 /* Minimal modern app: slim header, narrow collapsible sidebar, centered reading column. */
@@ -17,6 +19,7 @@
   --gold-soft: #f6efdc;
   --leaf: #5f8a4e;
   --focus: #1b7f8c;
+  color-scheme: only light;   /* light only: no dark theme, and browsers must not force one */
   --font: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
   --gutter-l: max(16px, env(safe-area-inset-left, 0px));
   --gutter-r: max(16px, env(safe-area-inset-right, 0px));
@@ -25,19 +28,8 @@
   --font-uni: "Alexandria", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
   --banner-bg: #ffffff;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f1c20; --surface: #162a30; --fg: #e6f0f2; --muted: #9db4ba; --line: #274047;
-    --teal: #6cc4cf; --teal-soft: #19363c; --on-teal: #0f1c20; --gold: #d8b25e; --gold-ink: #d8b25e; --gold-soft: #2f2a1a;
-    --leaf: #8fc07b; --focus: #6cc4cf; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0f1c20; --surface: #162a30; --fg: #e6f0f2; --muted: #9db4ba; --line: #274047;
-  --teal: #6cc4cf; --teal-soft: #19363c; --on-teal: #0f1c20; --gold: #d8b25e; --gold-ink: #d8b25e; --gold-soft: #2f2a1a;
-  --leaf: #8fc07b; --focus: #6cc4cf; color-scheme: dark;
-}
 * { box-sizing: border-box; }
+html { background: var(--bg); color-scheme: only light; }
 html, body { min-height: 100%; }
 body {
   background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.75;
@@ -49,6 +41,8 @@ body::before {
 }
 button, textarea, a { font-family: var(--font); }
 button, textarea { font-size: inherit; color: inherit; }
+textarea { background-color: #ffffff; color: var(--fg); caret-color: var(--teal); }
+textarea::placeholder { color: #5b6f76; opacity: 1; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
@@ -277,7 +271,7 @@ textarea.sm { min-height: 84px; }
 }
 @page { size: A4; margin: 11mm 13mm; }
 @media print {
-  html, body { background: #fff !important; height: auto; }
+  html, body { background: #fff !important; color: #17323a !important; color-scheme: only light; height: auto; }
   body { font-size: 10pt; }
   .top, .side, .backdrop, .no-print, .rep-actions, .credits, body::before { display: none !important; }
   .shell { display: block; min-height: 0; }

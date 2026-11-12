@@ -8,7 +8,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>[hidden]{display:none!important}html{color-scheme:light}body{margin:0}</style>
+<style>[hidden]{display:none!important}html{color-scheme:only light;background:#f6f9fa}body{margin:0}</style>
 ${src.slice(0, cut)}</head>
 <body>
 ${src.slice(cut)}</body>
