@@ -158,6 +158,7 @@ textarea.sm { min-height: 84px; }
 .nav-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; }
 .nav-row .btn { flex: 0 1 140px; }
 .link-btn { justify-self: start; background: none; border: 0; padding: 2px 0; color: var(--teal); font-size: .85rem; text-decoration: underline; text-underline-offset: 3px; }
+.opt-note { margin: 0 0 8px; font-size: .78rem; color: var(--muted); }
 .saved { margin: 12px 0 0; font-size: .78rem; color: var(--muted); }
 
 .done { padding-top: 24px; }
@@ -457,6 +458,10 @@ const QUESTIONS = [
   "phase": 1,
   "type": "single",
   "q": "ماذا كانت نتيجة تصرفك؟",
+  "extra": {
+   "label": "ما الدليل الذي اعتمدتِ عليه للحكم على نتيجة تصرفك؟",
+   "note": "اختياري — يمكنك ذكر ملاحظة صفية أو نتيجة تقويم أو استجابة من الطالبات"
+  },
   "opts": [
    {
     "id": "clear_improve",
@@ -697,7 +702,8 @@ function cleanAnswer(q, raw) {
   return {
     sel,
     text: hasWrite(q) && typeof r.text === "string" ? r.text : "",
-    other: q.other && sel.includes(q.other) && typeof r.other === "string" ? r.other : ""
+    other: q.other && sel.includes(q.other) && typeof r.other === "string" ? r.other : "",
+    extra: q.extra && typeof r.extra === "string" ? r.extra : ""   // optional note; never used by completion or the analysis rules
   };
 }
 try {
@@ -740,6 +746,8 @@ function qDone(q) {
   return false;
 }
 function firstMissing() { const i = QUESTIONS.findIndex((q) => !qDone(q)); return i < 0 ? undefined : i; }
+// The session can never be positioned beyond the first incomplete question, whatever way the teacher got there.
+function clampStep() { const m = firstMissing(); if (m !== undefined && state.step > m) { state.step = m; return true; } return false; }
 
 // ---------- Feedback link and usage counter ----------
 const FORM_URL = "https://forms.gle/if3XBZ3w3FGXa3ZM7";
@@ -798,6 +806,7 @@ function render() {
     if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
   updateEvalNav();
+  if (state.view === "session" && clampStep()) save();
   if (state.view === "home") renderHome();
   else if (state.view === "done") renderDone();
   else renderQuestion();
@@ -830,6 +839,11 @@ function renderQuestion() {
     <div class="opts" role="${multi ? "group" : "radiogroup"}" aria-labelledby="qtext">
       ${q.opts.map((o) => `<button class="opt ${multi ? "multi" : "single"}" type="button" role="${multi ? "checkbox" : "radio"}" data-id="${o.id}" aria-checked="${a.sel.includes(o.id)}"><span class="mk" aria-hidden="true"></span><span>${esc(o.label)}</span></button>`).join("")}
     </div>
+    ${q.extra ? `<div class="follow" id="extraBox" hidden>
+      <label class="lbl" for="extra">${esc(q.extra.label)}</label>
+      <p class="opt-note">${esc(q.extra.note)}</p>
+      <textarea id="extra" class="sm" placeholder="اكتبي إجابتك هنا"></textarea>
+    </div>` : ""}
     ${q.other ? `<div class="follow" id="otherBox" hidden>
       <label class="lbl" for="other">اكتبي التفاصيل</label>
       <textarea id="other" class="sm" placeholder="اكتبي إجابتك هنا"></textarea>
@@ -857,14 +871,18 @@ function renderQuestion() {
     </div>
     <p class="saved">${memoryOnly ? "تعذر الحفظ في هذا المتصفح. ستبقى الإجابات حتى تغلقين الصفحة." : "تُحفظ إجاباتك تلقائيًا على هذا الجهاز."}</p>`;
 
-  const ta = $("#ans"), ot = $("#other");
-  if (ta) { ta.value = a.text; ta.oninput = () => { a.text = ta.value; save(); updateEvalNav(); }; }
+  const ta = $("#ans"), ot = $("#other"), ex = $("#extra");
+  const updateNext = () => { $("#nextBtn").disabled = !qDone(q); };
+  if (ex) { ex.value = a.extra; ex.oninput = () => { a.extra = ex.value; save(); }; }
+  if (ta) { ta.value = a.text; ta.oninput = () => { a.text = ta.value; save(); updateEvalNav(); updateNext(); }; }
   if (ot) { ot.value = a.other; ot.oninput = () => { a.other = ot.value; save(); }; }
 
   function syncChoices() {
     view.querySelectorAll(".opt").forEach((b) => b.setAttribute("aria-checked", String(a.sel.includes(b.dataset.id))));
     const ob = $("#otherBox");
     if (ob) ob.hidden = !(q.other && a.sel.includes(q.other));
+    const eb = $("#extraBox");
+    if (eb) eb.hidden = a.sel.length === 0;
   }
   syncChoices();
   view.querySelectorAll(".opt").forEach((b) => {
@@ -875,14 +893,16 @@ function renderQuestion() {
       else if (id === q.exclusive) a.sel = [id];                  // "nothing missed" excludes the others
       else a.sel = a.sel.filter((x) => x !== q.exclusive).concat(id);
       if (!(q.other && a.sel.includes(q.other))) { a.other = ""; if (ot) ot.value = ""; }
-      save(); syncChoices(); updateEvalNav();
+      save(); syncChoices(); updateEvalNav(); updateNext();
     };
   });
+  updateNext();
   $("#prevBtn").onclick = () => step(-1);
   $("#nextBtn").onclick = () => step(1);
 }
 
 function step(dir) {
+  if (dir > 0 && !qDone(QUESTIONS[state.step])) return;   // forward only when the current question is complete
   const n = state.step + dir;
   if (n >= N) state.view = "done";
   else if (n >= 0) state.step = n;
@@ -1001,6 +1021,7 @@ function renderDone() {
     return;
   }
   const insights = analyze();
+  const resultEvidence = ((state.answers.result && state.answers.result.extra) || "").trim();
   const hasAction = selOf("step").length > 0;
   const stepIdx = QUESTIONS.findIndex((q) => q.id === "step");
 
@@ -1009,6 +1030,7 @@ function renderDone() {
       ${lead("وصف الموقف", entry("situation"))}
       ${fld("تصرفي", entry("action"))}
       <div class="fields">${fld("الهدف من التصرف", entry("goal"))}${fld("نتيجة التصرف", entry("result"))}</div>
+      ${resultEvidence ? fld("الدليل على النتيجة", para(resultEvidence)) : ""}
       ${fld("أسباب اتخاذ القرار", entry("reason"))}
     </div>`);
   const s2 = rsec("02", "ماذا تعلمت من الموقف؟",

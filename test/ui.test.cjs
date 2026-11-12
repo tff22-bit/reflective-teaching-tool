@@ -21,7 +21,7 @@ const srv = http.createServer((q,r)=>{ r.setHeader('content-type','text/html; ch
  console.log('eval disabled initially:',await pg.locator('#evalLi button').isDisabled());
  await pg.click('#startBtn'); await pg.waitForTimeout(300); console.log('posts after start',log.posts);
  await pg.reload(); await pg.waitForTimeout(200);
- await pg.click('#nextBtn'); await pg.click('#nextBtn'); await pg.click('[data-go="home"]'); await pg.click('#startBtn'); await pg.waitForTimeout(300);
+ await pg.fill('#ans','x'); await pg.click('#nextBtn'); await pg.click('[data-go="home"]'); await pg.click('#startBtn'); await pg.waitForTimeout(300);
  console.log('posts after reload/nav/home-again',log.posts);
  // complete all required, check eval link
  await pg.evaluate(()=>{const K="muhaqqiq-taammuli-v2";localStorage.setItem(K,JSON.stringify({view:"home",step:0,counted:true,answers:{
