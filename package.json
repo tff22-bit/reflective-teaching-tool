@@ -6,10 +6,12 @@
   "scripts": {
     "build": "node build.mjs",
     "test": "node test/function.test.mjs",
-    "test:ui": "node test/ui.test.cjs && node test/session.test.cjs && node test/engine.test.cjs && node test/report.test.cjs && node test/home.test.cjs && node test/theme.test.cjs && node test/navigation.test.cjs"
+    "test:ui": "node test/ui.test.cjs && node test/session.test.cjs && node test/engine.test.cjs && node test/report.test.cjs && node test/home.test.cjs && node test/theme.test.cjs && node test/navigation.test.cjs && node test/cloud-ui.test.cjs",
+    "test:real": "NODE_USE_ENV_PROXY=1 node test/real/supabase-rls.mjs"
   },
   "dependencies": {
-    "@netlify/database": "^2.0.3"
+    "@netlify/database": "^2.0.3",
+    "@supabase/supabase-js": "^2.119.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.17"

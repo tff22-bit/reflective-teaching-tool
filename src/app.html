@@ -109,6 +109,27 @@ main {
 .cr-l { display: block; font-size: .76rem; font-weight: 600; color: var(--gold-ink); }
 .cr-n { display: block; font-size: .9rem; font-weight: 500; line-height: 1.7; color: var(--teal); }
 
+.acct { margin-top: 22px; display: grid; justify-items: center; gap: 8px; }
+.acct p { margin: 0; font-size: .82rem; color: var(--muted); max-width: 42ch; }
+.acct .acct-err { color: #8a3b2e; }
+.acct-row { justify-content: center; }
+.btn-sm { min-height: 34px; padding: 3px 14px; font-size: .85rem; }
+.sync-banner { margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--gold); background: var(--gold-soft); border-radius: 10px; }
+.sync-banner p { margin: 0 0 8px; font-size: .92rem; }
+.mine-h { margin: 0 0 4px; font-size: 1.4rem; color: var(--teal); line-height: 1.5; }
+.mine-who { margin: 0 0 14px; font-size: .85rem; color: var(--muted); }
+.mine-note { margin: 0 0 12px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: .9rem; }
+.mine-import { margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--gold); border-radius: 10px; background: var(--gold-soft); }
+.mine-import p { margin: 0 0 8px; font-size: .9rem; }
+.mine-list { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 10px; }
+.mine-row { padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.mine-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.mine-date { font-size: .85rem; color: var(--muted); }
+.mine-prev { margin: 6px 0 2px; font-size: .95rem; overflow-wrap: anywhere; }
+.mine-step { margin: 0 0 4px; font-size: .8rem; color: var(--muted); }
+.mine-row .row { margin-top: 8px; align-items: center; }
+.mine-ask { font-size: .88rem; }
+.mine-actions { margin-top: 6px; }
 /* buttons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px;
@@ -274,7 +295,7 @@ textarea.sm { min-height: 84px; }
 @media print {
   html, body { background: #fff !important; color: #17323a !important; color-scheme: only light; height: auto; }
   body { font-size: 10pt; }
-  .top, .side, .backdrop, .no-print, .rep-actions, .credits, body::before { display: none !important; }
+  .top, .side, .backdrop, .no-print, .sync-banner, .rep-actions, .credits, body::before { display: none !important; }
   .shell { display: block; min-height: 0; }
   main { padding: 0; }
   .col, .col:has(.report) { max-width: none; margin: 0; }
@@ -327,10 +348,11 @@ textarea.sm { min-height: 84px; }
       <li><button class="nav" type="button" data-go="session"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>جلسة التأمل</button></li>
       <li><button class="nav" type="button" data-go="results"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>نتائج تأملي</button></li>
       <li id="evalLi"></li>
+      <li id="acctLi"></li>
     </ul>
   </nav>
   <div class="backdrop" id="backdrop" hidden></div>
-  <main id="main"><div class="col" id="view"></div></main>
+  <main id="main"><div class="col"><div class="sync-banner no-print" id="syncBanner" hidden></div><div id="view"></div></div></main>
 </div>
 
 <script>
@@ -688,7 +710,7 @@ const N = QUESTIONS.length;
 const KEY = "muhaqqiq-taammuli-v2";   // answers saved by an earlier question set (v1) are not reused
 
 // Saved shape: { view, step, counted, answers: { [questionId]: { sel: [optionId], text, other } } }
-let state = { view: "home", step: 0, answers: {}, counted: false };
+const freshState = () => ({ view: "home", step: 0, answers: {}, counted: false });
 let memoryOnly = false;
 const isChoice = (q) => q.type !== "text";
 const isMulti = (q) => q.type === "multi" || q.type === "multi_text";
@@ -706,21 +728,28 @@ function cleanAnswer(q, raw) {
     extra: q.extra && typeof r.extra === "string" ? r.extra : ""   // optional note; never used by completion or the analysis rules
   };
 }
-try {
-  const raw = localStorage.getItem(KEY);
-  if (raw) {
-    const s = JSON.parse(raw);
-    if (s && typeof s === "object") {
-      state.view = ["home", "session", "done"].includes(s.view) ? s.view : "home";
-      state.step = Math.min(Math.max(parseInt(s.step) || 0, 0), N - 1);
-      state.counted = !!s.counted;
-      const src = s.answers && typeof s.answers === "object" ? s.answers : {};
-      QUESTIONS.forEach((q) => { state.answers[q.id] = cleanAnswer(q, src[q.id]); });
-    }
+function parseState(s) {
+  const st = freshState();
+  if (s && typeof s === "object") {
+    st.view = ["home", "session", "done"].includes(s.view) ? s.view : "home";
+    st.step = Math.min(Math.max(parseInt(s.step) || 0, 0), N - 1);
+    st.counted = !!s.counted;
+    const src = s.answers && typeof s.answers === "object" ? s.answers : {};
+    QUESTIONS.forEach((q) => { st.answers[q.id] = cleanAnswer(q, src[q.id]); });
   }
-} catch (e) { memoryOnly = true; }
+  return st;
+}
+function loadGuest() {
+  try { const raw = localStorage.getItem(KEY); return raw ? parseState(JSON.parse(raw)) : freshState(); }
+  catch (e) { memoryOnly = true; return freshState(); }
+}
+let state = loadGuest();
+// Every change goes through save(): it writes the working copy (guest key, or the account copy when signed in)
+// and, when signed in, schedules the cloud save.
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); memoryOnly = false; } catch (e) { memoryOnly = true; }
+  if (cloud.user) { cloud.dirty = true; cloud.ver++; }
+  persist();
+  if (cloud.user) scheduleSync(1500);
 }
 
 const $ = (s) => document.querySelector(s);
@@ -733,8 +762,9 @@ const hasAny = (qid, ...oids) => oids.some((o) => has(qid, o));
 const qById = (id) => QUESTIONS.find((q) => q.id === id);
 
 // A question is complete by its answer type. The "other" detail box is optional.
-function qDone(q) {
-  const a = state.answers[q.id] || {};
+function qDone(q) { return qDoneIn(state.answers, q); }
+function qDoneIn(answers, q) {
+  const a = answers[q.id] || {};
   const n = (a.sel || []).length, t = (a.text || "").trim();
   switch (q.type) {
     case "text": return !!t;
@@ -800,13 +830,304 @@ async function countStart() {
   finally { counting = false; }
 }
 
+// ---------- Optional cloud save: Google sign-in (Supabase Auth) and Supabase Postgres ----------
+// Everything here is optional. Without config.js (or when offline) the tool works exactly as a guest tool.
+// Guest data (localStorage KEY) and account data (ACCOUNT_KEY) are kept apart; signing out removes only the account copy.
+const ACCOUNT_KEY = "muhaqqiq-account-v1";      // { uid, sid, rev, dirty, state } for the signed-in account only
+const IMPORT_KEY = "muhaqqiq-imported-v1";       // { [uid]: cloudSessionId } so a guest session is imported once, never duplicated
+const TABLE = "reflection_sessions";
+const cloud = { pending: null, loading: false, client: null, ready: false, user: null, sid: null, rev: null, dirty: false, ver: 0, timer: null, retry: null, syncing: false, status: "", conflict: null, list: null, listError: false, importMsg: "" };
+const ui = { page: null, notice: "" };
+
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+const newId = () => (window.crypto && crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3) | 8).toString(16); }));
+const lsGet = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const lsDel = (k) => { try { localStorage.removeItem(k); } catch (e) {} };
+const hasContent = (st) => Object.values(st.answers || {}).some((a) => a && (((a.text || "").trim()) || (a.sel || []).length || ((a.extra || "").trim())));
+const fmtDate = (iso) => { try { return new Date(iso).toLocaleString("ar-u-ca-gregory-nu-latn", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } };
+
+// ----- storage of the working copy -----
+function persist() {
+  try {
+    if (cloud.user) localStorage.setItem(ACCOUNT_KEY, JSON.stringify({ uid: cloud.user.id, sid: cloud.sid, rev: cloud.rev, dirty: cloud.dirty, pending: cloud.pending, state }));
+    else localStorage.setItem(KEY, JSON.stringify(state));
+    memoryOnly = false;
+  } catch (e) { memoryOnly = true; }
+}
+function stateFromRow(row) {
+  const st = freshState();
+  st.view = row.status === "complete" ? "done" : "session";
+  st.step = Math.min(Math.max(parseInt(row.step) || 0, 0), N - 1);
+  st.counted = !!row.counted;
+  const src = row.answers && typeof row.answers === "object" ? row.answers : {};
+  QUESTIONS.forEach((q) => { st.answers[q.id] = cleanAnswer(q, src[q.id]); });
+  return st;
+}
+function payload() {
+  return { answers: state.answers, status: firstMissing() === undefined ? "complete" : "in_progress", step: Math.min(Math.max(state.step, 0), N - 1), counted: !!state.counted, schema_version: 2 };
+}
+
+// ----- saving to Supabase (debounced; never overwrites a newer cloud copy without asking) -----
+function saveNoteText() {
+  if (memoryOnly) return "تعذر الحفظ في هذا المتصفح. ستبقى الإجابات حتى تغلقين الصفحة.";
+  if (!cloud.user) return "تُحفظ إجاباتك تلقائيًا على هذا الجهاز.";
+  if (cloud.status === "error") return "تعذر الحفظ في حسابك الآن. إجاباتك محفوظة على هذا الجهاز وسنحاول مجددًا.";
+  if (cloud.status === "saving") return "جارٍ الحفظ في حسابك…";
+  return "تُحفظ إجاباتك تلقائيًا في حسابك وعلى هذا الجهاز.";
+}
+function setCloudStatus(s) { cloud.status = s; const n = $("#saveNote"); if (n) n.textContent = saveNoteText(); }
+function scheduleSync(ms) { clearTimeout(cloud.timer); cloud.timer = setTimeout(syncCloud, ms); }
+async function syncCloud() {
+  if (!cloud.user || !cloud.client || cloud.syncing || cloud.conflict || !cloud.dirty) return;
+  if (!cloud.sid && !hasContent(state)) { cloud.dirty = false; persist(); return; }
+  cloud.syncing = true; setCloudStatus("saving");
+  const uid = cloud.user.id, ver = cloud.ver, body = payload();
+  try {
+    if (!cloud.sid) {
+      const id = cloud.pending || (cloud.pending = newId());               // same id on retry: a lost reply can never create a duplicate
+      persist();
+      const { data, error } = await cloud.client.from(TABLE).insert({ id, ...body }).select("id,rev").single();
+      if (error && error.code !== "23505") throw error;
+      if (!cloud.user || cloud.user.id !== uid) return;
+      if (error) { const r = await cloud.client.from(TABLE).select("id,rev").eq("id", id).single(); if (r.error) throw r.error; cloud.sid = r.data.id; cloud.rev = r.data.rev; await forceUpdate(body); }
+      else { cloud.sid = data.id; cloud.rev = data.rev; }
+      cloud.pending = null;
+    } else {
+      const { data, error } = await cloud.client.from(TABLE).update(body).eq("id", cloud.sid).eq("rev", cloud.rev).select("id,rev").maybeSingle();
+      if (error) throw error;
+      if (!cloud.user || cloud.user.id !== uid) return;
+      if (!data) { cloud.syncing = false; await detectConflict(); return; }
+      cloud.rev = data.rev;
+    }
+    if (cloud.user && cloud.user.id === uid) {
+      if (cloud.ver === ver) cloud.dirty = false;
+      persist(); setCloudStatus("saved");
+      if (cloud.dirty) scheduleSync(800);
+    }
+  } catch (e) {
+    setCloudStatus("error"); clearTimeout(cloud.retry); cloud.retry = setTimeout(() => scheduleSync(0), 15000);
+  } finally { cloud.syncing = false; }
+}
+async function forceUpdate(body) {
+  const { data, error } = await cloud.client.from(TABLE).update(body).eq("id", cloud.sid).select("id,rev").single();
+  if (error) throw error; cloud.rev = data.rev;
+}
+// Someone (another device) saved a newer copy: ask which copy to keep, never decide silently.
+async function detectConflict() {
+  try {
+    const { data, error } = await cloud.client.from(TABLE).select("*").eq("id", cloud.sid).maybeSingle();
+    if (error) throw error;
+    if (!data) { cloud.sid = null; cloud.rev = null; persist(); scheduleSync(0); return; }   // deleted elsewhere: save again as a new session
+    cloud.conflict = data; setCloudStatus(""); render();
+  } catch (e) { setCloudStatus("error"); clearTimeout(cloud.retry); cloud.retry = setTimeout(() => scheduleSync(0), 15000); }
+}
+async function resolveConflict(keep) {
+  const row = cloud.conflict; if (!row) return;
+  if (keep === "cloud") { state = stateFromRow(row); cloud.rev = row.rev; cloud.dirty = false; cloud.conflict = null; persist(); render(); return; }
+  try { cloud.sid = row.id; await forceUpdate(payload()); cloud.dirty = false; cloud.conflict = null; persist(); setCloudStatus("saved"); render(); }
+  catch (e) { setCloudStatus("error"); }
+}
+// Best effort before leaving the current session; returns true when nothing is left unsaved.
+async function flushCloud() {
+  if (!cloud.user || !cloud.dirty) return true;
+  clearTimeout(cloud.timer);
+  for (let i = 0; i < 3 && cloud.syncing; i++) await new Promise((r) => setTimeout(r, 300));
+  await syncCloud();
+  return !cloud.dirty && !cloud.conflict;
+}
+window.addEventListener("online", () => { if (cloud.user && cloud.dirty) scheduleSync(500); });
+
+// ----- account state transitions -----
+function enterAccount(user) {
+  cloud.user = user; cloud.conflict = null; cloud.list = null; cloud.listError = false; cloud.dirty = false;
+  const acc = lsGet(ACCOUNT_KEY);
+  if (acc && acc.uid === user.id && acc.state) { state = parseState(acc.state); cloud.sid = acc.sid || null; cloud.rev = acc.rev == null ? null : acc.rev; cloud.dirty = !!acc.dirty; cloud.pending = acc.pending || null; }
+  else { lsDel(ACCOUNT_KEY); state = freshState(); cloud.sid = null; cloud.rev = null; cloud.pending = null; }   // another account's copy is never shown
+  let fresh = false; try { fresh = sessionStorage.getItem("muhaqqiq-login-pending") === "1"; sessionStorage.removeItem("muhaqqiq-login-pending"); } catch (e) {}
+  ui.page = fresh ? "mine" : null; ui.notice = "";      // right after signing in, show the previous sessions
+  render();
+  if (cloud.dirty) scheduleSync(0); else refreshWorkingCopy();
+}
+function leaveAccount() {
+  clearTimeout(cloud.timer); clearTimeout(cloud.retry);
+  cloud.user = null; cloud.sid = null; cloud.rev = null; cloud.pending = null; cloud.dirty = false; cloud.conflict = null; cloud.list = null; cloud.status = "";
+  lsDel(ACCOUNT_KEY);                      // account data leaves this device (it stays in the cloud); the guest session is untouched
+  state = loadGuest(); ui.page = null; ui.notice = "";
+  render();
+}
+function setUser(user) {
+  const uid = user ? user.id : null;
+  if ((cloud.user ? cloud.user.id : null) === uid) { if (user) cloud.user = user; return; }
+  if (user) enterAccount(user); else leaveAccount();
+}
+// A clean working copy simply follows the cloud (nothing local would be lost).
+async function refreshWorkingCopy() {
+  if (!cloud.user || !cloud.sid || cloud.dirty) return;
+  try {
+    const { data, error } = await cloud.client.from(TABLE).select("*").eq("id", cloud.sid).maybeSingle();
+    if (error || !cloud.user || cloud.dirty) return;
+    if (!data) { cloud.sid = null; cloud.rev = null; persist(); return; }
+    if (data.rev !== cloud.rev) { state = stateFromRow(data); cloud.rev = data.rev; persist(); render(); }
+  } catch (e) {}
+}
+async function signInGoogle() {
+  if (!cloud.ready) return;
+  try { try { sessionStorage.setItem("muhaqqiq-login-pending", "1"); } catch (e) {}
+    await cloud.client.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname, scopes: "email profile", queryParams: { prompt: "select_account" } } }); }
+  catch (e) { ui.notice = "تعذر بدء تسجيل الدخول الآن. يمكنك المتابعة دون حساب."; render(); }
+}
+async function signOutFlow(force) {
+  if (!cloud.user) return;
+  if (!force && !(await flushCloud())) { ui.notice = "unsaved"; render(); return; }
+  try { await cloud.client.auth.signOut(); } catch (e) {}
+  leaveAccount();
+}
+async function initCloud() {
+  try {
+    await loadScript("config.js");
+    const c = window.APP_CONFIG;
+    if (!c || !c.supabaseUrl || !c.supabaseAnonKey) return;
+    await loadScript("supabase.js");
+    cloud.client = window.supabase.createClient(c.supabaseUrl, c.supabaseAnonKey, { auth: { flowType: "pkce", persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+    cloud.ready = true;
+    const q = new URLSearchParams(location.search + "&" + location.hash.replace(/^#/, ""));
+    if (q.get("error") || q.get("error_description")) { ui.notice = "تعذر تسجيل الدخول. يمكنك المتابعة دون حساب."; history.replaceState({}, document.title, location.pathname); }
+    cloud.client.auth.onAuthStateChange((ev, session) => { setTimeout(() => setUser(session ? session.user : null), 0); });
+    const { data } = await cloud.client.auth.getSession();
+    setUser(data && data.session ? data.session.user : null);
+    render();
+  } catch (e) { cloud.ready = false; }
+}
+
+// ----- previous sessions page -----
+async function loadList() {
+  if (cloud.loading) return;
+  cloud.loading = true; cloud.list = null; cloud.listError = false;
+  try {
+    const { data, error } = await cloud.client.from(TABLE).select("id,status,step,rev,updated_at,preview:answers->situation->>text").order("updated_at", { ascending: false }).limit(100);
+    if (error) throw error; cloud.list = data || [];
+  } catch (e) { cloud.listError = true; cloud.list = []; }
+  cloud.loading = false;
+  if (ui.page === "mine") renderMine();
+}
+function guestImportable() {
+  if (!cloud.user) return null;
+  const done = lsGet(IMPORT_KEY) || {};
+  if (done[cloud.user.id]) return null;
+  const g = loadGuest();
+  return hasContent(g) ? g : null;
+}
+async function importGuest() {
+  const g = guestImportable(); if (!g) return;
+  const map = lsGet(IMPORT_KEY) || {};
+  const id = (lsGet("muhaqqiq-import-pending-v1") || {})[cloud.user.id] || newId();
+  lsSet("muhaqqiq-import-pending-v1", { ...(lsGet("muhaqqiq-import-pending-v1") || {}), [cloud.user.id]: id });
+  const body = { answers: g.answers, status: QUESTIONS.every((q) => qDoneIn(g.answers, q)) ? "complete" : "in_progress", step: Math.min(Math.max(g.step, 0), N - 1), counted: !!g.counted, schema_version: 2 };
+  try {
+    const { error } = await cloud.client.from(TABLE).insert({ id, ...body });
+    if (error && error.code !== "23505") throw error;
+    map[cloud.user.id] = id; lsSet(IMPORT_KEY, map); cloud.importMsg = "ok";
+  } catch (e) { cloud.importMsg = "error"; }
+  await loadList();
+}
+async function openCloudSession(id) {
+  if (!(await flushCloud())) { ui.notice = "unsaved-open"; renderMine(); return; }
+  try {
+    const { data, error } = await cloud.client.from(TABLE).select("*").eq("id", id).single();
+    if (error) throw error;
+    state = stateFromRow(data); cloud.sid = data.id; cloud.rev = data.rev; cloud.dirty = false; cloud.conflict = null; ui.page = null; ui.notice = "";
+    persist(); render(); window.scrollTo(0, 0);
+  } catch (e) { ui.notice = "open-error"; renderMine(); }
+}
+async function deleteCloudSession(id) {
+  try {
+    const { error } = await cloud.client.from(TABLE).delete().eq("id", id);
+    if (error) throw error;
+    if (cloud.sid === id) { cloud.sid = null; cloud.rev = null; cloud.dirty = false; state = freshState(); persist(); }
+  } catch (e) { ui.notice = "delete-error"; }
+  await loadList();
+}
+
+function renderMine() {
+  const user = cloud.user; if (!user) return;
+  const note = { "unsaved": "", "unsaved-open": "لم تُحفظ آخر تعديلاتك في الحساب بعد. حاولي مرة أخرى بعد قليل.", "open-error": "تعذر فتح الجلسة الآن. حاولي لاحقًا.", "delete-error": "تعذر حذف الجلسة الآن. حاولي لاحقًا." }[ui.notice] || "";
+  const g = guestImportable();
+  const rows = (cloud.list || []).map((r) => {
+    const done = r.status === "complete";
+    const prev = (r.preview || "").trim();
+    return `<li class="mine-row" data-id="${esc(r.id)}">
+      <div class="mine-head"><span class="mine-date">${esc(fmtDate(r.updated_at))}</span><span class="chip">${done ? "مكتملة" : "غير مكتملة"}</span></div>
+      ${prev ? `<p class="mine-prev">${esc(prev.length > 90 ? prev.slice(0, 90) + "…" : prev)}</p>` : ""}
+      ${done ? "" : `<p class="mine-step">وصلتِ إلى السؤال ${(r.step | 0) + 1} من ${N}</p>`}
+      <div class="row"><button class="btn btn-ghost btn-sm" type="button" data-open="${esc(r.id)}">${done ? "عرض التقرير" : "استكمال"}</button>
+      <button class="btn btn-ghost btn-sm" type="button" data-del="${esc(r.id)}">حذف</button></div>
+    </li>`;
+  }).join("");
+  view.innerHTML = `
+    <section class="mine">
+      <h2 class="mine-h">تأملاتي السابقة</h2>
+      <p class="mine-who">مسجّلة الدخول بحساب Google: <bdi>${esc(user.email || "")}</bdi></p>
+      ${note ? `<p class="mine-note">${esc(note)}</p>` : ""}
+      ${g ? `<div class="mine-import"><p>لديك جلسة تأمل محفوظة على هذا الجهاز دون حساب. تبقى النسخة الأصلية على الجهاز ولن تُحذف.</p>
+        <button class="btn btn-primary btn-sm" type="button" id="importBtn">نقل الجلسة إلى حسابي</button></div>` : ""}
+      ${cloud.importMsg === "ok" ? `<p class="mine-note">تم نقل الجلسة إلى حسابك.</p>` : cloud.importMsg === "error" ? `<p class="mine-note">تعذر نقل الجلسة الآن. حاولي لاحقًا.</p>` : ""}
+      ${cloud.list === null ? `<p class="none">جارٍ التحميل…</p>` : cloud.listError ? `<p class="mine-note">تعذر تحميل جلساتك الآن. حاولي لاحقًا.</p>` : rows ? `<ul class="mine-list">${rows}</ul>` : `<p class="none">لا توجد جلسات محفوظة في حسابك بعد.</p>`}
+      <div class="row mine-actions"><button class="btn btn-primary" type="button" id="mineStart">${hasContent(state) ? "العودة إلى جلستي الحالية" : "بدء جلسة تأمل جديدة"}</button></div>
+    </section>`;
+  const imp = $("#importBtn"); if (imp) imp.onclick = () => { imp.disabled = true; importGuest(); };
+  view.querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openCloudSession(b.dataset.open)));
+  view.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => {
+    const li = b.closest(".mine-row"); const id = b.dataset.del;
+    li.querySelector(".row").innerHTML = `<span class="mine-ask">حذف هذه الجلسة نهائيًا من حسابك؟</span><button class="btn btn-primary btn-sm" type="button" data-yes="${esc(id)}">نعم، احذفيها</button><button class="btn btn-ghost btn-sm" type="button" data-no="1">إلغاء</button>`;
+    li.querySelector("[data-yes]").onclick = () => deleteCloudSession(id);
+    li.querySelector("[data-no]").onclick = () => renderMine();
+  }));
+  $("#mineStart").onclick = () => { ui.page = null; state.view = "session"; persist(); render(); window.scrollTo(0, 0); countStart(); };
+}
+// Banner for save conflicts and sign-out warnings (never shown in print).
+function renderBanner() {
+  const el = $("#syncBanner"); if (!el) return;
+  if (cloud.conflict) {
+    el.hidden = false;
+    el.innerHTML = `<p>عُدّلت هذه الجلسة من جهاز آخر. أي نسخة تريدين الاحتفاظ بها؟</p>
+      <div class="row"><button class="btn btn-primary btn-sm" type="button" id="keepLocal">نسخة هذا الجهاز</button>
+      <button class="btn btn-ghost btn-sm" type="button" id="keepCloud">النسخة المحفوظة في الحساب</button></div>`;
+    $("#keepLocal").onclick = () => resolveConflict("local"); $("#keepCloud").onclick = () => resolveConflict("cloud");
+  } else if (ui.notice === "unsaved") {
+    el.hidden = false;
+    el.innerHTML = `<p>لم تُحفظ آخر تعديلاتك في حسابك بعد. تسجيل الخروج الآن يزيل هذه النسخة من الجهاز.</p>
+      <div class="row"><button class="btn btn-primary btn-sm" type="button" id="outAnyway">تسجيل الخروج على أي حال</button>
+      <button class="btn btn-ghost btn-sm" type="button" id="outCancel">إلغاء</button></div>`;
+    $("#outAnyway").onclick = () => signOutFlow(true); $("#outCancel").onclick = () => { ui.notice = ""; render(); };
+  } else { el.hidden = true; el.innerHTML = ""; }
+}
+const ICON = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+function updateAcctNav() {
+  const li = $("#acctLi"); if (!li) return;
+  const sig = cloud.ready ? (cloud.user ? "in" : "out") : "off";
+  if (li.dataset.sig === sig) return;
+  li.dataset.sig = sig;
+  if (sig === "off") { li.innerHTML = ""; return; }
+  li.innerHTML = sig === "in"
+    ? `<button class="nav" type="button" data-go="mine">${ICON('<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>')}تأملاتي السابقة</button>
+       <button class="nav" type="button" id="logoutNav">${ICON('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>')}تسجيل الخروج</button>`
+    : `<button class="nav" type="button" id="googleNav">${ICON('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')}حفظ بحساب Google</button>`;
+  li.querySelectorAll(".nav[data-go]").forEach((b) => (b.onclick = () => go(b.dataset.go)));
+  const lo = $("#logoutNav"); if (lo) lo.onclick = () => { signOutFlow(false); if (mobile()) setSide(false); };
+  const gn = $("#googleNav"); if (gn) gn.onclick = () => signInGoogle();
+}
+
 function render() {
+  updateAcctNav();
   document.querySelectorAll(".nav[data-go]").forEach((b) => {
-    const on = b.dataset.go === (state.view === "home" ? "home" : state.view === "done" ? "results" : "session");
+    const on = b.dataset.go === (ui.page === "mine" ? "mine" : state.view === "home" ? "home" : state.view === "done" ? "results" : "session");
     if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
   updateEvalNav();
   if (state.view === "session" && clampStep()) save();
+  renderBanner();
+  if (ui.page === "mine" && cloud.user) { renderMine(); if (cloud.list === null && !cloud.loading) loadList(); return; }
   if (state.view === "home") renderHome();
   else if (state.view === "done") renderDone();
   else renderQuestion();
@@ -818,9 +1139,10 @@ function renderHome() {
     <section class="home">
       <div class="home-main">
         <h2>كل موقف تدريسي يحمل فرصة للتعلّم</h2>
-        <p>أداة تساعدك على التأمل في موقف حقيقي من فصلك من خلال أسئلة متدرجة. تُحفظ إجاباتك على جهازك فقط.</p>
+        <p>أداة تساعدك على التأمل في موقف حقيقي من فصلك من خلال أسئلة متدرجة. ${cloud.user ? "تُحفظ إجاباتك في حسابك وعلى هذا الجهاز." : "تُحفظ إجاباتك على جهازك فقط."}</p>
         <button class="btn btn-primary" type="button" id="startBtn">${started ? "أكملي جلسة التأمل" : "ابدئي جلسة التأمل"}</button>
         <p class="count" id="countLine" hidden></p>
+        ${acctHome()}
       </div>
       <footer class="credits">
         <div><span class="cr-l">إشراف:</span><span class="cr-n">د. داليه الغامدي</span></div>
@@ -829,6 +1151,17 @@ function renderHome() {
     </section>`;
   updateCountEl(); loadCount();
   $("#startBtn").onclick = () => go("session");
+  const gb = $("#googleBtn"); if (gb) gb.onclick = () => signInGoogle();
+  const mb = $("#mineBtn"); if (mb) mb.onclick = () => go("mine");
+  const ob = $("#outBtn"); if (ob) ob.onclick = () => signOutFlow(false);
+}
+function acctHome() {
+  if (!cloud.ready) return "";
+  const err = ui.notice && ui.notice.startsWith("تعذر") ? `<p class="acct-err">${esc(ui.notice)}</p>` : "";
+  if (cloud.user) return `<div class="acct"><p>مسجّلة الدخول بحساب Google: <bdi>${esc(cloud.user.email || "")}</bdi></p>
+    <div class="row acct-row"><button class="btn btn-ghost btn-sm" type="button" id="mineBtn">تأملاتي السابقة</button><button class="btn btn-ghost btn-sm" type="button" id="outBtn">تسجيل الخروج</button></div></div>`;
+  return `<div class="acct">${err}<p>التأملات المحفوظة دون حساب لا يمكن استرجاعها من جهاز آخر.</p>
+    <button class="btn btn-ghost btn-sm" type="button" id="googleBtn">حفظ تأملاتي بحساب Google</button></div>`;
 }
 
 function renderQuestion() {
@@ -869,7 +1202,7 @@ function renderQuestion() {
       <button class="btn btn-ghost" type="button" id="prevBtn" ${i === 0 ? "disabled" : ""}>السابق</button>
       <button class="btn btn-primary" type="button" id="nextBtn">${last ? "إنهاء الجلسة" : "التالي"}</button>
     </div>
-    <p class="saved">${memoryOnly ? "تعذر الحفظ في هذا المتصفح. ستبقى الإجابات حتى تغلقين الصفحة." : "تُحفظ إجاباتك تلقائيًا على هذا الجهاز."}</p>`;
+    <p class="saved" id="saveNote">${esc(saveNoteText())}</p>`;
 
   const ta = $("#ans"), ot = $("#other"), ex = $("#extra");
   const updateNext = () => { $("#nextBtn").disabled = !qDone(q); };
@@ -1096,10 +1429,11 @@ function renderDone() {
   $("#printBtn").onclick = () => { $("#printHint").hidden = false; try { window.print(); } catch (e) {} };
   view.querySelectorAll("[data-goto]").forEach((b) => (b.onclick = () => { state.view = "session"; state.step = +b.dataset.goto; save(); render(); window.scrollTo(0, 0); }));
   $("#resetBtn").onclick = () => {
-    $("#confirmBox").innerHTML = `<div class="confirm"><p>سيتم حذف كل إجاباتك المحفوظة والتقرير الحالي. هل تريدين المتابعة؟</p>
+    $("#confirmBox").innerHTML = `<div class="confirm"><p>${cloud.user ? "تبقى جلستك الحالية محفوظة في حسابك وتُفتح من «تأملاتي السابقة». هل تريدين بدء تأمل جديد؟" : "سيتم حذف كل إجاباتك المحفوظة والتقرير الحالي. هل تريدين المتابعة؟"}</p>
       <div class="row"><button class="btn btn-primary" type="button" id="yesReset">نعم، ابدئي تأملًا جديدًا</button>
       <button class="btn btn-ghost" type="button" id="noReset">إلغاء</button></div></div>`;
-    $("#yesReset").onclick = () => {
+    $("#yesReset").onclick = async () => {
+      if (cloud.user) { await flushCloud(); cloud.sid = null; cloud.rev = null; cloud.pending = null; cloud.dirty = false; cloud.conflict = null; }   // the finished session stays in the account
       state = { view: "session", step: 0, answers: {}, counted: false };
       QUESTIONS.forEach((q) => ans(q));
       save(); render(); window.scrollTo(0, 0); countStart();
@@ -1109,6 +1443,8 @@ function renderDone() {
 }
 
 function go(v) {
+  if (v === "mine") { if (!cloud.user) return; ui.page = "mine"; ui.notice = ""; cloud.list = null; render(); window.scrollTo(0, 0); if (mobile()) setSide(false); return; }
+  ui.page = null; if (ui.notice && ui.notice !== "unsaved") ui.notice = "";
   state.view = v === "results" ? "done" : v === "session" ? "session" : "home";
   save(); render(); window.scrollTo(0, 0);
   if (v === "session") countStart();
@@ -1129,4 +1465,5 @@ document.querySelectorAll(".nav[data-go]").forEach((b) => (b.onclick = () => go(
 setSide(!mobile());
 
 render();
+initCloud();
 </script>

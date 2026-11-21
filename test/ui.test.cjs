@@ -1,6 +1,6 @@
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs');
-const srv = http.createServer((q,r)=>{ r.setHeader('content-type','text/html; charset=utf-8'); r.end(fs.readFileSync(__dirname+'/../public/index.html')); });
+const srv = http.createServer((q,r)=>{ if (q.url !== '/' && !q.url.startsWith('/?')) { r.statusCode = 404; return r.end(); } r.setHeader('content-type','text/html; charset=utf-8'); r.end(fs.readFileSync(__dirname+'/../public/index.html')); });
 (async()=>{
  await new Promise(r=>srv.listen(0,r)); const base='http://localhost:'+srv.address().port+'/';
  const b=await chromium.launch(); const errs=[];
